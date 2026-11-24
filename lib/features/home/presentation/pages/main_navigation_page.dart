@@ -21,7 +21,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       const SolarClockView(),
       const FocusTimerView(),
       PlannerView(onSwitchTab: (index) => setState(() => _currentIndex = index)),
-      const AlarmView(),
+      AlarmView(onSwitchTab: (index) => setState(() => _currentIndex = index)),
     ];
 
     return Scaffold(

@@ -1,0 +1,19 @@
+appId: com.example.solar_alarm
+---
+# Flow 3: Test Daily Planner
+- launchApp:
+    clearState: false
+
+- tapOn: "Rejalar"
+- assertVisible: "Kunlik Rejalar"
+
+# Add a new task
+- tapOn: "Yangi Reja"
+- assertVisible: "Yangi Reja Qo'shish"
+
+# Input title
+- inputText: "Flutter E2E Test"
+- tapOn: "Saqlash"
+
+# Verify task exists in the list
+- assertVisible: "Flutter E2E Test"

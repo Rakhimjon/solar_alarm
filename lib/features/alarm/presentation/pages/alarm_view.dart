@@ -6,9 +6,12 @@ import '../../../../core/theme/theme_cubit.dart';
 import '../../domain/entities/alarm_item.dart';
 import '../cubit/alarm_cubit.dart';
 import '../cubit/alarm_state.dart';
+import 'add_edit_alarm_page.dart';
 
 class AlarmView extends StatelessWidget {
-  const AlarmView({super.key});
+  final Function(int)? onSwitchTab;
+
+  const AlarmView({super.key, this.onSwitchTab});
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +52,11 @@ class AlarmView extends StatelessWidget {
                 tooltip: context.isDark ? 'Yorug\' rejim' : 'Qorong\'u rejim',
                 onPressed: () => context.read<ThemeCubit>().toggleTheme(),
               ),
+              IconButton(
+                icon: Icon(Icons.add_rounded, size: 24.r, color: colors.primary),
+                tooltip: 'Yangi budilnik',
+                onPressed: () => _openAddEdit(context),
+              ),
             ],
           ),
           body: Padding(
@@ -70,8 +78,21 @@ class AlarmView extends StatelessWidget {
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          'Baland ovozli yangi budilnik qo\'shing',
+                          'Quyosh/Namoz vaqtiga bog\'langan yoki baland ovozli yangi budilnik qo\'shing',
+                          textAlign: TextAlign.center,
                           style: TextStyle(color: colors.textMuted, fontSize: 13.sp),
+                        ),
+                        SizedBox(height: 16.h),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colors.primary,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                          ),
+                          onPressed: () => _openAddEdit(context),
+                          icon: Icon(Icons.add_alarm_rounded, size: 20.r),
+                          label: Text('Budilnik Qo\'shish', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
@@ -85,384 +106,274 @@ class AlarmView extends StatelessWidget {
                     },
                   ),
           ),
-          floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: colors.primary,
-            foregroundColor: Colors.white,
-            onPressed: () => _showAddAlarmSheet(context, cubit),
-            icon: Icon(Icons.alarm_add_rounded, size: 20.r),
-            label: Text('Yangi Budilnik', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp)),
-          ),
+          floatingActionButton: state.alarms.isEmpty
+              ? null
+              : FloatingActionButton.extended(
+                  backgroundColor: colors.primary,
+                  foregroundColor: Colors.white,
+                  onPressed: () => _openAddEdit(context),
+                  icon: Icon(Icons.alarm_add_rounded, size: 20.r),
+                  label: Text('Yangi Budilnik', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp)),
+                ),
         );
       },
+    );
+  }
+
+  void _openAddEdit(BuildContext context, [AlarmItem? alarm]) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddEditAlarmPage(initialAlarm: alarm),
+      ),
     );
   }
 
   Widget _buildAlarmCard(BuildContext context, AlarmItem alarm, AlarmCubit cubit) {
     final colors = context.appColors;
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: alarm.isEnabled ? colors.primary.withValues(alpha: 0.4) : colors.cardBorder,
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      alarm.formattedTime,
-                      style: TextStyle(
-                        fontSize: 28.sp,
-                        fontWeight: FontWeight.bold,
-                        color: alarm.isEnabled ? colors.textPrimary : colors.textMuted,
-                      ),
-                    ),
-                    SizedBox(width: 10.w),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                      decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: context.isDark ? 0.15 : 0.08),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Text(
-                        alarm.label,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: colors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 4.h),
-                Row(
-                  children: [
-                    Icon(Icons.volume_up_rounded, size: 14.r, color: colors.textMuted),
-                    SizedBox(width: 4.w),
-                    Text(
-                      alarm.soundTitle,
-                      style: TextStyle(fontSize: 12.sp, color: colors.textMuted),
-                    ),
-                    SizedBox(width: 12.w),
-                    Icon(Icons.repeat_rounded, size: 14.r, color: colors.textMuted),
-                    SizedBox(width: 4.w),
-                    Text(
-                      alarm.repeatDaysText,
-                      style: TextStyle(fontSize: 12.sp, color: colors.textMuted),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Switch.adaptive(
-            value: alarm.isEnabled,
-            activeTrackColor: colors.primary.withValues(alpha: 0.5),
-            activeThumbColor: colors.primary,
-            onChanged: (_) => cubit.toggleAlarm(alarm.id),
-          ),
-          IconButton(
-            icon: Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20.r),
-            onPressed: () => cubit.deleteAlarm(alarm.id),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showAddAlarmSheet(BuildContext context, AlarmCubit cubit) {
-    TimeOfDay selectedTime = TimeOfDay.now();
-    String label = 'Ertalabki uyg\'onish';
-    AlarmSoundOption selectedSound = AlarmSoundOption.all.first;
-    List<int> repeatDays = [];
-    bool vibrate = true;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: context.appColors.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            final sheetColors = context.appColors;
-
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 20.w,
-                right: 20.w,
-                top: 20.h,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Yangi Baland Budilnik',
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.bold,
-                        color: sheetColors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-
-                    // Time Picker Button
-                    InkWell(
-                      onTap: () async {
-                        final picked = await showTimePicker(
-                          context: context,
-                          initialTime: selectedTime,
-                        );
-                        if (picked != null) {
-                          setModalState(() => selectedTime = picked);
-                        }
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 14.h),
-                        decoration: BoxDecoration(
-                          color: sheetColors.primary.withValues(alpha: context.isDark ? 0.12 : 0.08),
-                          borderRadius: BorderRadius.circular(14.r),
-                          border: Border.all(color: sheetColors.primary),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}',
-                            style: TextStyle(
-                              fontSize: 36.sp,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 2.0,
-                              color: sheetColors.primary,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 14.h),
-
-                    // Label Field
-                    TextField(
-                      decoration: InputDecoration(
-                        labelText: 'Budilnik nomi',
-                        labelStyle: TextStyle(color: sheetColors.textMuted, fontSize: 13.sp),
-                        hintText: 'masalan: Bomdodga uyg\'onish',
-                        hintStyle: TextStyle(color: sheetColors.textMuted, fontSize: 13.sp),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                          borderSide: BorderSide(color: sheetColors.cardBorder),
-                        ),
-                      ),
-                      style: TextStyle(color: sheetColors.textPrimary),
-                      onChanged: (val) => label = val,
-                    ),
-                    SizedBox(height: 14.h),
-
-                    // Loud Sound Selector
-                    Text(
-                      '🔊 Ovoz (Baland signal):',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        color: sheetColors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 6.h),
-                    Wrap(
-                      spacing: 8.w,
-                      runSpacing: 6.h,
-                      children: AlarmSoundOption.all.map((sound) {
-                        final isSelected = selectedSound.path == sound.path;
-                        return ChoiceChip(
-                          label: Text(sound.title, style: TextStyle(fontSize: 12.sp)),
-                          selected: isSelected,
-                          selectedColor: sheetColors.primary,
-                          backgroundColor: sheetColors.card,
-                          side: BorderSide(
-                            color: isSelected ? sheetColors.primary : sheetColors.cardBorder,
-                          ),
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : sheetColors.textPrimary,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
-                          onSelected: (_) => setModalState(() => selectedSound = sound),
-                        );
-                      }).toList(),
-                    ),
-                    SizedBox(height: 14.h),
-
-                    // Repeat Days
-                    Text(
-                      '📅 Takrorlanish kunlari:',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        color: sheetColors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 6.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _weekdayChip('Du', 1, repeatDays, setModalState, sheetColors),
-                        _weekdayChip('Se', 2, repeatDays, setModalState, sheetColors),
-                        _weekdayChip('Chor', 3, repeatDays, setModalState, sheetColors),
-                        _weekdayChip('Pay', 4, repeatDays, setModalState, sheetColors),
-                        _weekdayChip('Jum', 5, repeatDays, setModalState, sheetColors),
-                        _weekdayChip('Shan', 6, repeatDays, setModalState, sheetColors),
-                        _weekdayChip('Yak', 7, repeatDays, setModalState, sheetColors),
-                      ],
-                    ),
-                    SizedBox(height: 14.h),
-
-                    // Vibrate Switch
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Tebranish (Vibratsiya)',
-                          style: TextStyle(fontSize: 13.sp, color: sheetColors.textPrimary),
-                        ),
-                        Switch.adaptive(
-                          value: vibrate,
-                          activeTrackColor: sheetColors.primary.withValues(alpha: 0.5),
-                          activeThumbColor: sheetColors.primary,
-                          onChanged: (v) => setModalState(() => vibrate = v),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16.h),
-
-                    // Save Button
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: sheetColors.primary,
-                        foregroundColor: Colors.white,
-                        minimumSize: Size.fromHeight(48.h),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                      ),
-                      onPressed: () {
-                        cubit.saveAlarm(
-                          hour: selectedTime.hour,
-                          minute: selectedTime.minute,
-                          label: label.trim(),
-                          soundPath: selectedSound.path,
-                          soundTitle: selectedSound.title,
-                          repeatDays: repeatDays,
-                          vibrate: vibrate,
-                        );
-                        Navigator.pop(sheetContext);
-                      },
-                      child: Text(
-                        'Saqlash va Yoqish',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _weekdayChip(
-    String label,
-    int day,
-    List<int> repeatDays,
-    StateSetter setModalState,
-    AppColors colors,
-  ) {
-    final isSelected = repeatDays.contains(day);
-    return GestureDetector(
-      onTap: () {
-        setModalState(() {
-          if (isSelected) {
-            repeatDays.remove(day);
-          } else {
-            repeatDays.add(day);
-          }
-        });
-      },
+    return InkWell(
+      onTap: () => _openAddEdit(context, alarm),
+      borderRadius: BorderRadius.circular(16.r),
       child: Container(
-        width: 38.w,
-        height: 38.w,
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         decoration: BoxDecoration(
-          color: isSelected ? colors.primary : colors.card,
-          shape: BoxShape.circle,
+          color: colors.card,
+          borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
-            color: isSelected ? colors.primary : colors.cardBorder,
+            color: alarm.isEnabled ? colors.primary.withValues(alpha: 0.4) : colors.cardBorder,
           ),
         ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 11.sp,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? Colors.white : colors.textPrimary,
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        alarm.formattedTime,
+                        style: TextStyle(
+                          fontSize: 28.sp,
+                          fontWeight: FontWeight.bold,
+                          color: alarm.isEnabled ? colors.textPrimary : colors.textMuted,
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Flexible(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                          decoration: BoxDecoration(
+                            color: colors.primary.withValues(alpha: context.isDark ? 0.15 : 0.08),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Text(
+                            alarm.label,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: colors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 6.h),
+                  Wrap(
+                    spacing: 8.w,
+                    runSpacing: 4.h,
+                    children: [
+                      if (alarm.hasSolarLink)
+                        _miniBadge(
+                          '📍 ${_solarNameUz(alarm.linkedSolarType)} (${alarm.solarOffsetMinutes >= 0 ? "+" : ""}${alarm.solarOffsetMinutes} daq)',
+                          colors.primary,
+                          colors,
+                        ),
+                      if (alarm.requireMathMission)
+                        _miniBadge('🧠 Aqliy missiya', Colors.orangeAccent, colors),
+                      _miniBadge(alarm.soundTitle, colors.textMuted, colors),
+                      _miniBadge(alarm.repeatDaysText, colors.textMuted, colors),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
+            Switch.adaptive(
+              value: alarm.isEnabled,
+              activeTrackColor: colors.primary.withValues(alpha: 0.5),
+              activeThumbColor: colors.primary,
+              onChanged: (_) => cubit.toggleAlarm(alarm.id),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Widget _miniBadge(String text, Color textColor, AppColors colors) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+      decoration: BoxDecoration(
+        color: colors.cardBorder.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(6.r),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: 10.sp, color: textColor, fontWeight: FontWeight.w500),
+      ),
+    );
+  }
+
+  String _solarNameUz(String? type) {
+    switch (type) {
+      case 'fajr':
+        return 'Bomdod';
+      case 'sunrise':
+        return 'Quyosh';
+      case 'dhuhr':
+        return 'Peshin';
+      case 'asr':
+        return 'Asr';
+      case 'maghrib':
+        return 'Shom';
+      case 'isha':
+        return 'Xufton';
+      default:
+        return 'Quyosh';
+    }
   }
 
   void _showRingingDialog(BuildContext context, AlarmState state) {
+    final mathController = TextEditingController();
+    String? errorMessage;
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
-          title: Center(
-            child: Text(
-              '⏰ Budilnik Jiringlamoqda!',
-              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                state.ringingAlarmLabel ?? 'Vaqt bo\'ldi!',
-                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+              title: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.alarm_on_rounded, color: Colors.amber, size: 28),
+                    SizedBox(width: 8.w),
+                    Text(
+                      'Budilnik Jiringlamoqda!',
+                      style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
               ),
-              SizedBox(height: 12.h),
-              const Icon(Icons.alarm_on_rounded, size: 64, color: Colors.amber),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                context.read<AlarmCubit>().snoozeRinging(minutes: 5);
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('5 daqiqa kuting (Snooze)'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-              onPressed: () {
-                context.read<AlarmCubit>().dismissRinging();
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('To\'xtatish', style: TextStyle(color: Colors.white)),
-            ),
-          ],
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      state.ringingAlarmLabel ?? 'Vaqt bo\'ldi!',
+                      style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
+                    ),
+                    SizedBox(height: 14.h),
+
+                    // If Math Mission is required
+                    if (state.ringingRequireMath) ...[
+                      Container(
+                        padding: EdgeInsets.all(12.w),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(color: Colors.amber),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              '🧠 Uyqudan uyg\'onish missiyasi:',
+                              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              '${state.mathOperand1} + ${state.mathOperand2} = ?',
+                              style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.bold, letterSpacing: 2.0),
+                            ),
+                            SizedBox(height: 10.h),
+                            TextField(
+                              controller: mathController,
+                              keyboardType: TextInputType.number,
+                              autofocus: true,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
+                              decoration: InputDecoration(
+                                hintText: 'Javobni yozing',
+                                errorText: errorMessage,
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 14.h),
+                    ],
+
+                    // Wake-up to Deep Work CTA Button
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFD97706)]),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.hourglass_top_rounded, color: Colors.white),
+                        label: Text(
+                          '🚀 25 d Fokusni boshlash',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.sp),
+                        ),
+                        onPressed: () {
+                          context.read<AlarmCubit>().dismissRinging();
+                          Navigator.pop(dialogContext);
+                          onSwitchTab?.call(1); // Jump straight to Qumsoat focus!
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    context.read<AlarmCubit>().snoozeRinging(minutes: 5);
+                    Navigator.pop(dialogContext);
+                  },
+                  child: const Text('5 daqiqa kuting (Snooze)'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                  onPressed: () {
+                    if (state.ringingRequireMath) {
+                      final input = int.tryParse(mathController.text.trim());
+                      final solved = context.read<AlarmCubit>().verifyMathAndDismiss(input ?? -1);
+                      if (solved) {
+                        Navigator.pop(dialogContext);
+                      } else {
+                        setDialogState(() {
+                          errorMessage = 'Noto\'g\'ri! Yana hisoblang';
+                        });
+                      }
+                    } else {
+                      context.read<AlarmCubit>().dismissRinging();
+                      Navigator.pop(dialogContext);
+                    }
+                  },
+                  child: const Text('To\'xtatish', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
         );
       },
     );

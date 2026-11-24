@@ -1,0 +1,20 @@
+appId: com.example.solar_alarm
+---
+# Flow 2: Test Focus Timer & Hourglass
+- launchApp:
+    clearState: false
+
+- tapOn: "Qumsoat"
+- assertVisible: "Qumsoat Fokus"
+- assertVisible: "Qat'iy rejim (Deep Work)"
+
+# Select 25 min preset
+- tapOn: "25 d"
+
+# Start timer
+- tapOn: "Boshlash"
+- assertVisible: "Pauza"
+
+# Pause timer
+- tapOn: "Pauza"
+- assertVisible: "Boshlash"

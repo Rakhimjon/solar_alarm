@@ -1,0 +1,19 @@
+appId: com.example.solar_alarm
+---
+# Flow 1: Launch and verify Solar & Prayer times
+- launchApp:
+    clearState: false
+
+- assertVisible: "Quyosh & Namoz Soati"
+- assertVisible: "Toshkent"
+- assertVisible: "Bugungi Barcha Vaqtlar"
+
+# Toggle light / dark theme
+- tapOn:
+    id: "theme_toggle"
+    optional: true
+
+# Check that prayer times are displayed
+- assertVisible: "Bomdod"
+- assertVisible: "Peshin"
+- assertVisible: "Shom"

@@ -1,4 +1,4 @@
-.PHONY: all get clean clean_all runner watch format analyze test apk bundle ios icon help
+.PHONY: all get clean clean_all runner watch format analyze test e2e maestro-install apk bundle ios icon help
 
 help:
 	@echo "Available commands:"
@@ -11,6 +11,7 @@ help:
 	@echo "  make format     - Format all dart files"
 	@echo "  make analyze    - Run flutter analyze"
 	@echo "  make test       - Run unit tests"
+	@echo "  make e2e        - Run Maestro E2E test suite"
 	@echo "  make run        - Run flutter app"
 	@echo "  make apk        - Build release APK"
 	@echo "  make bundle     - Build release AppBundle"
@@ -44,6 +45,12 @@ analyze:
 
 test:
 	flutter test
+
+maestro-install:
+	curl -FsSL "https://get.maestro.mobile.dev" | bash
+
+e2e:
+	maestro test .maestro/suite.yaml
 
 run:
 	flutter run

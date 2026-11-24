@@ -63,7 +63,7 @@ void main() {
   test('AlarmCubit loads, saves, toggles, and deletes alarm', () async {
     expect(cubit.state.alarms, isEmpty);
 
-    // Save alarm
+    // Save alarm with math mission and solar link
     await cubit.saveAlarm(
       hour: 6,
       minute: 30,
@@ -72,12 +72,22 @@ void main() {
       soundTitle: 'Baland Signal',
       repeatDays: [1, 2, 3, 4, 5],
       vibrate: true,
+      requireMathMission: true,
+      linkedSolarType: 'fajr',
+      solarOffsetMinutes: -20,
       existingId: 101,
     );
 
     expect(cubit.state.alarms.length, 1);
     expect(cubit.state.alarms.first.label, 'Bomdod');
+    expect(cubit.state.alarms.first.requireMathMission, isTrue);
+    expect(cubit.state.alarms.first.hasSolarLink, isTrue);
     expect(cubit.state.alarms.first.isEnabled, isTrue);
+
+    // Verify math mission verification
+    final correctAnswer = cubit.state.mathAnswer;
+    expect(cubit.verifyMathAndDismiss(correctAnswer + 5), isFalse);
+    expect(cubit.verifyMathAndDismiss(correctAnswer), isTrue);
 
     // Toggle alarm
     await cubit.toggleAlarm(101);

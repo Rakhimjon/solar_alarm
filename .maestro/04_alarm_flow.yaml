@@ -1,0 +1,31 @@
+appId: com.example.solar_alarm
+---
+# Flow 4: Test Dedicated Alarm System & Math Challenge
+- launchApp:
+    clearState: false
+
+- tapOn: "Budilnik"
+- assertVisible: "Budilnik"
+
+# Open Add Alarm Page
+- tapOn:
+    text: "Yangi Budilnik"
+    optional: true
+- tapOn:
+    text: "Budilnik Qo'shish"
+    optional: true
+
+# Verify Add Alarm Page
+- assertVisible: "Yangi Budilnik"
+- assertVisible: "Aqliy missiya (Math Challenge)"
+
+# Switch to Solar mode
+- tapOn: "☀️ Quyosh / Namoz"
+- tapOn: "Bomdod 🌅"
+
+# Save Alarm
+- tapOn: "Saqlash"
+
+# Verify returned to Alarm list and new item is visible
+- assertVisible: "Budilnik"
+- assertVisible: "Bomdod"

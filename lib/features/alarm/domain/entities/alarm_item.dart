@@ -22,6 +22,9 @@ class AlarmItem {
   final String soundTitle;
   final List<int> repeatDays; // 1 = Dush ... 7 = Yaksh
   final bool vibrate;
+  final bool requireMathMission;
+  final String? linkedSolarType; // 'fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'
+  final int solarOffsetMinutes;
 
   const AlarmItem({
     required this.id,
@@ -33,7 +36,12 @@ class AlarmItem {
     this.soundTitle = 'Baland Raqamli (2.8 kHz)',
     this.repeatDays = const [],
     this.vibrate = true,
+    this.requireMathMission = false,
+    this.linkedSolarType,
+    this.solarOffsetMinutes = 0,
   });
+
+  bool get hasSolarLink => linkedSolarType != null;
 
   String get formattedTime {
     final h = hour.toString().padLeft(2, '0');
@@ -98,6 +106,9 @@ class AlarmItem {
     String? soundTitle,
     List<int>? repeatDays,
     bool? vibrate,
+    bool? requireMathMission,
+    String? linkedSolarType,
+    int? solarOffsetMinutes,
   }) {
     return AlarmItem(
       id: id ?? this.id,
@@ -109,6 +120,9 @@ class AlarmItem {
       soundTitle: soundTitle ?? this.soundTitle,
       repeatDays: repeatDays ?? this.repeatDays,
       vibrate: vibrate ?? this.vibrate,
+      requireMathMission: requireMathMission ?? this.requireMathMission,
+      linkedSolarType: linkedSolarType ?? this.linkedSolarType,
+      solarOffsetMinutes: solarOffsetMinutes ?? this.solarOffsetMinutes,
     );
   }
 
@@ -123,6 +137,9 @@ class AlarmItem {
       'soundTitle': soundTitle,
       'repeatDays': repeatDays,
       'vibrate': vibrate,
+      'requireMathMission': requireMathMission,
+      'linkedSolarType': linkedSolarType,
+      'solarOffsetMinutes': solarOffsetMinutes,
     };
   }
 
@@ -137,6 +154,9 @@ class AlarmItem {
       soundTitle: json['soundTitle'] as String? ?? 'Baland Raqamli (2.8 kHz)',
       repeatDays: (json['repeatDays'] as List<dynamic>?)?.map((e) => e as int).toList() ?? const [],
       vibrate: json['vibrate'] as bool? ?? true,
+      requireMathMission: json['requireMathMission'] as bool? ?? false,
+      linkedSolarType: json['linkedSolarType'] as String?,
+      solarOffsetMinutes: json['solarOffsetMinutes'] as int? ?? 0,
     );
   }
 }

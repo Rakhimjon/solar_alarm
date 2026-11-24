@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:alarm/alarm.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/alarm_item.dart';
@@ -18,9 +19,18 @@ class AlarmCubit extends Cubit<AlarmState> {
     _ringSubscription = Alarm.ringing.listen((alarmSet) {
       if (alarmSet.alarms.isNotEmpty) {
         final ringingAlarm = alarmSet.alarms.first;
+        final match = state.alarms.where((a) => a.id == ringingAlarm.id).firstOrNull;
+
+        final rand = Random();
+        final op1 = 15 + rand.nextInt(35);
+        final op2 = 12 + rand.nextInt(40);
+
         emit(state.copyWith(
           ringingAlarmId: ringingAlarm.id,
-          ringingAlarmLabel: ringingAlarm.notificationSettings.title,
+          ringingAlarmLabel: match?.label ?? ringingAlarm.notificationSettings.title,
+          ringingRequireMath: match?.requireMathMission ?? false,
+          mathOperand1: op1,
+          mathOperand2: op2,
         ));
       } else if (state.isRinging) {
         emit(state.copyWith(clearRinging: true));
@@ -43,6 +53,9 @@ class AlarmCubit extends Cubit<AlarmState> {
     required String soundTitle,
     required List<int> repeatDays,
     required bool vibrate,
+    bool requireMathMission = false,
+    String? linkedSolarType,
+    int solarOffsetMinutes = 0,
     int? existingId,
   }) async {
     final id = existingId ?? DateTime.now().millisecondsSinceEpoch % 100000;
@@ -55,6 +68,9 @@ class AlarmCubit extends Cubit<AlarmState> {
       soundTitle: soundTitle,
       repeatDays: repeatDays,
       vibrate: vibrate,
+      requireMathMission: requireMathMission,
+      linkedSolarType: linkedSolarType,
+      solarOffsetMinutes: solarOffsetMinutes,
       isEnabled: true,
     );
 
@@ -72,6 +88,14 @@ class AlarmCubit extends Cubit<AlarmState> {
     await repository.deleteAlarm(id);
     await loadAlarms();
     emit(state.copyWith(message: 'Budilnik o\'chirildi'));
+  }
+
+  bool verifyMathAndDismiss(int userAnswer) {
+    if (userAnswer == state.mathAnswer) {
+      dismissRinging();
+      return true;
+    }
+    return false;
   }
 
   Future<void> dismissRinging() async {
