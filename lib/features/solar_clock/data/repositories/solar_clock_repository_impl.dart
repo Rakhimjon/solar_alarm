@@ -1,23 +1,37 @@
 import 'package:solar_alarm/core/services/alarm_local_datasource.dart';
 import '../datasources/astronomical_calculator.dart';
+import '../datasources/prayer_times_remote_datasource.dart';
 import '../../domain/entities/solar_time_item.dart';
 import '../../domain/repositories/solar_clock_repository.dart';
 
 class SolarClockRepositoryImpl implements SolarClockRepository {
   final AstronomicalCalculator calculator;
+  final PrayerTimesRemoteDataSource remoteDataSource;
   final AlarmLocalDataSource alarmDataSource;
 
   SolarClockRepositoryImpl({
     required this.calculator,
+    required this.remoteDataSource,
     required this.alarmDataSource,
   });
 
   @override
-  DaySolarCycle getDayCycle({
+  Future<DaySolarCycle> getDayCycle({
     required DateTime date,
     required double lat,
     required double lng,
-  }) {
+  }) async {
+    try {
+      final remote = await remoteDataSource.fetchDayCycle(
+        date: date,
+        lat: lat,
+        lng: lng,
+      );
+      if (remote != null) {
+        return remote;
+      }
+    } catch (_) {}
+
     return calculator.calculateCycle(date: date, lat: lat, lng: lng);
   }
 

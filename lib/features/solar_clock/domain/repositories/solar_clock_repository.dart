@@ -1,7 +1,7 @@
 import '../entities/solar_time_item.dart';
 
 abstract class SolarClockRepository {
-  DaySolarCycle getDayCycle({
+  Future<DaySolarCycle> getDayCycle({
     required DateTime date,
     required double lat,
     required double lng,

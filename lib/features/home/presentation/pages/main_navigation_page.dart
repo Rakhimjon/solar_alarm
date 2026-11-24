@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import 'package:solar_alarm/features/alarm/presentation/pages/alarm_view.dart';
 import 'package:solar_alarm/features/focus_timer/presentation/pages/focus_timer_view.dart';
 import 'package:solar_alarm/features/planner/presentation/pages/planner_view.dart';
 import 'package:solar_alarm/features/solar_clock/presentation/pages/solar_clock_view.dart';
@@ -20,6 +21,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       const SolarClockView(),
       const FocusTimerView(),
       PlannerView(onSwitchTab: (index) => setState(() => _currentIndex = index)),
+      const AlarmView(),
     ];
 
     return Scaffold(
@@ -54,6 +56,11 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
               icon: Icon(Icons.checklist_rounded),
               activeIcon: Icon(Icons.fact_check_rounded),
               label: 'Rejalar',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.access_alarms_outlined),
+              activeIcon: Icon(Icons.access_alarms_rounded),
+              label: 'Budilnik',
             ),
           ],
         ),

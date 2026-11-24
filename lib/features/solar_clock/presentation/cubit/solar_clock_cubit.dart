@@ -14,13 +14,13 @@ class SolarClockCubit extends Cubit<SolarClockState> {
     _ticker = Timer.periodic(const Duration(minutes: 1), (_) => refreshCycle());
   }
 
-  void loadCycle() {
+  void loadCycle() async {
     emit(state.copyWith(status: SolarClockStatus.loading));
-    refreshCycle();
+    await refreshCycle();
   }
 
-  void refreshCycle() {
-    final cycle = repository.getDayCycle(
+  Future<void> refreshCycle() async {
+    final cycle = await repository.getDayCycle(
       date: DateTime.now(),
       lat: state.lat,
       lng: state.lng,

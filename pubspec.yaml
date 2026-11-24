@@ -20,6 +20,7 @@ dependencies:
   get_it: ^7.7.0
   shared_preferences: ^2.3.2
   freezed_annotation: ^2.4.4
+  flutter_screenutil: ^5.9.3
 
 dev_dependencies:
   flutter_test:
@@ -45,4 +46,7 @@ flutter:
 
   assets:
     - assets/alarm.wav
+    - assets/loud_beep.wav
+    - assets/siren_alarm.wav
+    - assets/gentle_chime.wav
 
