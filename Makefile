@@ -1,4 +1,4 @@
-.PHONY: all get clean clean_all runner watch format analyze test apk bundle ios help
+.PHONY: all get clean clean_all runner watch format analyze test apk bundle ios icon help
 
 help:
 	@echo "Available commands:"
@@ -7,12 +7,16 @@ help:
 	@echo "  make clean_all  - Full clean and rebuild"
 	@echo "  make runner     - Generate code (bloc, freezed, json)"
 	@echo "  make watch      - Watch & auto-generate code"
+	@echo "  make icon       - Generate Android & iOS launcher icons"
 	@echo "  make format     - Format all dart files"
 	@echo "  make analyze    - Run flutter analyze"
 	@echo "  make test       - Run unit tests"
 	@echo "  make run        - Run flutter app"
 	@echo "  make apk        - Build release APK"
 	@echo "  make bundle     - Build release AppBundle"
+
+icon:
+	dart run flutter_launcher_icons
 
 get:
 	flutter pub get
