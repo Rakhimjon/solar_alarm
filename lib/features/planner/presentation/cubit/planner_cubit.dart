@@ -19,12 +19,13 @@ class PlannerCubit extends Cubit<PlannerState> {
     ));
   }
 
-  Future<void> createTask(String title, int targetMinutes) async {
+  Future<void> createTask(String title, int targetMinutes, {String? category}) async {
     if (title.trim().isEmpty) return;
     final task = PlanTask(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: title.trim(),
       targetMinutes: targetMinutes,
+      category: category,
       createdAt: DateTime.now(),
     );
     await repository.saveTask(task);
