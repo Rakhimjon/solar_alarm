@@ -1,13 +1,11 @@
 import 'dart:math';
+import '../../domain/entities/solar_types.dart';
 
-enum SolarEvent { sunrise, sunset }
-
-class SolarCalculator {
+class SolarCalculatorDataSource {
   static const double _deg2rad = pi / 180.0;
   static const double _rad2deg = 180.0 / pi;
 
-  /// Returns calculated solar time (sunrise or sunset) adjusted for local timezone.
-  static DateTime getSolarTime({
+  DateTime getSolarTime({
     required DateTime date,
     required double lat,
     required double lng,
@@ -15,11 +13,12 @@ class SolarCalculator {
     int offsetMinutes = 0,
   }) {
     final dayOfYear = int.parse(
-      DateTime(date.year, date.month, date.day)
-          .difference(DateTime(date.year, 1, 1))
-          .inDays
-          .toString(),
-    ) + 1;
+          DateTime(date.year, date.month, date.day)
+              .difference(DateTime(date.year, 1, 1))
+              .inDays
+              .toString(),
+        ) +
+        1;
 
     final gamma = (2 * pi / 365) * (dayOfYear - 1);
     final eqtime = 229.18 *
@@ -55,8 +54,7 @@ class SolarCalculator {
     return DateTime(date.year, date.month, date.day, hour, minute);
   }
 
-  /// Calculates next alarm time (today if still upcoming, else tomorrow).
-  static DateTime getNextAlarmTime({
+  DateTime getNextAlarmTime({
     required double lat,
     required double lng,
     required SolarEvent event,
