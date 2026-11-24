@@ -1,0 +1,55 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../domain/entities/plan_task.dart';
+import '../../domain/repositories/plan_repository.dart';
+import 'planner_state.dart';
+
+class PlannerCubit extends Cubit<PlannerState> {
+  final PlanRepository repository;
+
+  PlannerCubit({required this.repository}) : super(const PlannerState()) {
+    loadTasks();
+  }
+
+  Future<void> loadTasks() async {
+    emit(state.copyWith(status: PlannerStatus.loading));
+    final tasks = await repository.getTasks();
+    emit(state.copyWith(
+      status: PlannerStatus.loaded,
+      tasks: tasks,
+    ));
+  }
+
+  Future<void> createTask(String title, int targetMinutes) async {
+    if (title.trim().isEmpty) return;
+    final task = PlanTask(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: title.trim(),
+      targetMinutes: targetMinutes,
+      createdAt: DateTime.now(),
+    );
+    await repository.saveTask(task);
+    await loadTasks();
+  }
+
+  Future<void> toggleDone(String id) async {
+    await repository.toggleTaskCompletion(id);
+    await loadTasks();
+  }
+
+  Future<void> deleteTask(String id) async {
+    await repository.deleteTask(id);
+    if (state.activeTaskId == id) {
+      emit(state.copyWith(activeTaskId: null));
+    }
+    await loadTasks();
+  }
+
+  void setActiveTask(String? id) {
+    emit(state.copyWith(activeTaskId: id));
+  }
+
+  Future<void> recordFocusMinutes(String id, int minutes) async {
+    await repository.addFocusDuration(id, minutes);
+    await loadTasks();
+  }
+}
