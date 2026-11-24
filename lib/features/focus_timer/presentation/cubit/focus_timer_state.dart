@@ -6,6 +6,9 @@ class FocusTimerState {
   final int remainingSeconds;
   final String? activeTaskId;
   final String? activeTaskTitle;
+  final bool isDeepWorkEnabled;
+  final bool isLocked;
+  final String? warningMessage;
 
   const FocusTimerState({
     this.status = FocusStatus.idle,
@@ -13,6 +16,9 @@ class FocusTimerState {
     this.remainingSeconds = 25 * 60,
     this.activeTaskId,
     this.activeTaskTitle,
+    this.isDeepWorkEnabled = true,
+    this.isLocked = false,
+    this.warningMessage,
   });
 
   double get progress {
@@ -32,6 +38,10 @@ class FocusTimerState {
     int? remainingSeconds,
     String? activeTaskId,
     String? activeTaskTitle,
+    bool? isDeepWorkEnabled,
+    bool? isLocked,
+    String? warningMessage,
+    bool clearWarning = false,
   }) {
     return FocusTimerState(
       status: status ?? this.status,
@@ -39,6 +49,9 @@ class FocusTimerState {
       remainingSeconds: remainingSeconds ?? this.remainingSeconds,
       activeTaskId: activeTaskId ?? this.activeTaskId,
       activeTaskTitle: activeTaskTitle ?? this.activeTaskTitle,
+      isDeepWorkEnabled: isDeepWorkEnabled ?? this.isDeepWorkEnabled,
+      isLocked: isLocked ?? this.isLocked,
+      warningMessage: clearWarning ? null : (warningMessage ?? this.warningMessage),
     );
   }
 }

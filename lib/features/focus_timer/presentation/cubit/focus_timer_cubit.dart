@@ -1,14 +1,26 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:solar_alarm/core/services/kiosk_service.dart';
 import 'package:solar_alarm/features/planner/presentation/cubit/planner_cubit.dart';
 import 'focus_timer_state.dart';
 
 class FocusTimerCubit extends Cubit<FocusTimerState> {
   final PlannerCubit plannerCubit;
+  final KioskService kioskService;
   Timer? _ticker;
 
-  FocusTimerCubit({required this.plannerCubit})
-      : super(const FocusTimerState());
+  FocusTimerCubit({
+    required this.plannerCubit,
+    required this.kioskService,
+  }) : super(const FocusTimerState());
+
+  void toggleDeepWork(bool value) {
+    emit(state.copyWith(isDeepWorkEnabled: value));
+  }
+
+  void clearWarning() {
+    emit(state.copyWith(clearWarning: true));
+  }
 
   void setDurationMinutes(int minutes) {
     if (state.status == FocusStatus.running) return;
@@ -17,6 +29,7 @@ class FocusTimerCubit extends Cubit<FocusTimerState> {
       status: FocusStatus.idle,
       totalSeconds: sec,
       remainingSeconds: sec,
+      clearWarning: true,
     ));
   }
 
@@ -27,31 +40,70 @@ class FocusTimerCubit extends Cubit<FocusTimerState> {
     ));
   }
 
-  void start() {
+  void start() async {
     if (state.status == FocusStatus.running) return;
-    emit(state.copyWith(status: FocusStatus.running));
+
+    bool locked = false;
+    if (state.isDeepWorkEnabled) {
+      locked = await kioskService.startLock();
+    }
+
+    emit(state.copyWith(
+      status: FocusStatus.running,
+      isLocked: locked,
+      clearWarning: true,
+    ));
+
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
   }
 
-  void pause() {
+  void pause() async {
     _ticker?.cancel();
-    emit(state.copyWith(status: FocusStatus.paused));
-  }
-
-  void reset() {
-    _ticker?.cancel();
+    if (state.isLocked) {
+      await kioskService.stopLock();
+    }
     emit(state.copyWith(
-      status: FocusStatus.idle,
-      remainingSeconds: state.totalSeconds,
+      status: FocusStatus.paused,
+      isLocked: false,
     ));
   }
 
-  void _tick() {
+  void reset() async {
+    _ticker?.cancel();
+    if (state.isLocked) {
+      await kioskService.stopLock();
+    }
+    emit(state.copyWith(
+      status: FocusStatus.idle,
+      remainingSeconds: state.totalSeconds,
+      isLocked: false,
+      clearWarning: true,
+    ));
+  }
+
+  void handleAppLifecycleBackground() async {
+    if (state.status == FocusStatus.running) {
+      _ticker?.cancel();
+      if (state.isLocked) {
+        await kioskService.stopLock();
+      }
+      emit(state.copyWith(
+        status: FocusStatus.paused,
+        isLocked: false,
+        warningMessage: '⚠️ Ilovadan chiqildi! Fokus to\'xtatildi.',
+      ));
+    }
+  }
+
+  void _tick() async {
     if (state.remainingSeconds > 1) {
       emit(state.copyWith(remainingSeconds: state.remainingSeconds - 1));
     } else {
       _ticker?.cancel();
+      if (state.isLocked) {
+        await kioskService.stopLock();
+      }
       final finishedMinutes = state.totalSeconds ~/ 60;
       if (state.activeTaskId != null) {
         plannerCubit.recordFocusMinutes(state.activeTaskId!, finishedMinutes);
@@ -59,6 +111,7 @@ class FocusTimerCubit extends Cubit<FocusTimerState> {
       emit(state.copyWith(
         status: FocusStatus.completed,
         remainingSeconds: 0,
+        isLocked: false,
       ));
     }
   }
@@ -66,6 +119,7 @@ class FocusTimerCubit extends Cubit<FocusTimerState> {
   @override
   Future<void> close() {
     _ticker?.cancel();
+    kioskService.stopLock();
     return super.close();
   }
 }

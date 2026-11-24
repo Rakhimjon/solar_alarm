@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'core/services/kiosk_service.dart';
+import 'core/theme/theme_cubit.dart';
 import 'features/focus_timer/presentation/cubit/focus_timer_cubit.dart';
 import 'features/planner/data/datasources/planner_local_datasource.dart';
 import 'features/planner/data/repositories/plan_repository_impl.dart';
@@ -21,6 +23,8 @@ Future<void> initDi() async {
   final alarmLocalDataSource = AlarmLocalDataSource();
   await alarmLocalDataSource.init();
   sl.registerLazySingleton<AlarmLocalDataSource>(() => alarmLocalDataSource);
+
+  sl.registerLazySingleton<KioskService>(() => KioskService());
 
   // 2. Data Sources
   sl.registerLazySingleton<AstronomicalCalculator>(
@@ -44,6 +48,9 @@ Future<void> initDi() async {
   );
 
   // 4. Cubits
+  sl.registerLazySingleton<ThemeCubit>(
+    () => ThemeCubit(prefs: sl<SharedPreferences>()),
+  );
   sl.registerFactory<SolarClockCubit>(
     () => SolarClockCubit(repository: sl<SolarClockRepository>()),
   );
@@ -51,6 +58,9 @@ Future<void> initDi() async {
     () => PlannerCubit(repository: sl<PlanRepository>()),
   );
   sl.registerFactory<FocusTimerCubit>(
-    () => FocusTimerCubit(plannerCubit: sl<PlannerCubit>()),
+    () => FocusTimerCubit(
+      plannerCubit: sl<PlannerCubit>(),
+      kioskService: sl<KioskService>(),
+    ),
   );
 }

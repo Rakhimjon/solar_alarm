@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:solar_alarm/core/theme/app_theme.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/theme_cubit.dart';
 import '../../domain/entities/solar_time_item.dart';
 import '../cubit/solar_clock_cubit.dart';
 import '../cubit/solar_clock_state.dart';
@@ -11,16 +12,18 @@ class SolarClockView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
+
     return BlocConsumer<SolarClockCubit, SolarClockState>(
       listenWhen: (prev, curr) => curr.message != null,
       listener: (context, state) {
         if (state.message != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              backgroundColor: AppTheme.cardColor,
+              backgroundColor: colors.card,
               content: Text(
                 state.message!,
-                style: const TextStyle(color: AppTheme.primaryAmber),
+                style: TextStyle(color: colors.primary),
               ),
             ),
           );
@@ -29,7 +32,7 @@ class SolarClockView extends StatelessWidget {
       builder: (context, state) {
         final cycle = state.cycle;
         if (cycle == null) {
-          return const Center(child: CircularProgressIndicator(color: AppTheme.primaryAmber));
+          return Center(child: CircularProgressIndicator(color: colors.primary));
         }
 
         final next = cycle.nextEvent;
@@ -40,7 +43,16 @@ class SolarClockView extends StatelessWidget {
             title: const Text('Quyosh & Namoz Soati'),
             actions: [
               IconButton(
-                icon: const Icon(Icons.refresh, color: AppTheme.textMuted),
+                icon: Icon(
+                  context.isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                  color: colors.primary,
+                ),
+                tooltip: context.isDark ? 'Yorug\' rejim' : 'Qorong\'u rejim',
+                onPressed: () => context.read<ThemeCubit>().toggleTheme(),
+              ),
+              IconButton(
+                icon: Icon(Icons.refresh, color: colors.textMuted),
+                tooltip: 'Yangilash',
                 onPressed: () => context.read<SolarClockCubit>().refreshCycle(),
               ),
             ],
@@ -61,15 +73,15 @@ class SolarClockView extends StatelessWidget {
                           children: [
                             Text(
                               DateFormat('EEEE, d MMMM').format(cycle.date),
-                              style: const TextStyle(
-                                color: AppTheme.textMuted,
+                              style: TextStyle(
+                                color: colors.textMuted,
                                 fontSize: 13,
                               ),
                             ),
-                            const Text(
+                            Text(
                               '📍 Toshkent',
                               style: TextStyle(
-                                color: AppTheme.primaryAmber,
+                                color: colors.primary,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -85,18 +97,18 @@ class SolarClockView extends StatelessWidget {
                           const SizedBox(height: 8),
                           Text(
                             'Keyingi vaqt: ${next.title}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
-                              color: AppTheme.textMuted,
+                              color: colors.textMuted,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             DateFormat('HH:mm').format(next.time),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 36,
                               fontWeight: FontWeight.bold,
-                              color: AppTheme.textLight,
+                              color: colors.textPrimary,
                               letterSpacing: 1.2,
                             ),
                           ),
@@ -108,13 +120,13 @@ class SolarClockView extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: AppTheme.primaryAmber.withValues(alpha: 0.15),
+                                color: colors.primary.withValues(alpha: context.isDark ? 0.15 : 0.1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
                                 '${timeUntil.inHours}s ${timeUntil.inMinutes % 60}d qoldi',
-                                style: const TextStyle(
-                                  color: AppTheme.primaryAmber,
+                                style: TextStyle(
+                                  color: colors.primary,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -131,9 +143,9 @@ class SolarClockView extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppTheme.cardColor,
+                    color: colors.card,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.cardBorder),
+                    border: Border.all(color: colors.cardBorder),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,20 +153,20 @@ class SolarClockView extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Quyosh Harakati (Kungi sikl)',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.textLight,
+                              color: colors.textPrimary,
                             ),
                           ),
                           Text(
                             '${(cycle.dayProgress * 100).toInt()}%',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryAmber,
+                              color: colors.primary,
                             ),
                           ),
                         ],
@@ -164,8 +176,10 @@ class SolarClockView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                         child: LinearProgressIndicator(
                           value: cycle.dayProgress,
-                          backgroundColor: Colors.white.withValues(alpha: 0.08),
-                          valueColor: const AlwaysStoppedAnimation(AppTheme.primaryAmber),
+                          backgroundColor: context.isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : Colors.black.withValues(alpha: 0.06),
+                          valueColor: AlwaysStoppedAnimation(colors.primary),
                           minHeight: 8,
                         ),
                       ),
@@ -175,12 +189,12 @@ class SolarClockView extends StatelessWidget {
                 const SizedBox(height: 20),
 
                 // All times list
-                const Text(
+                Text(
                   'Bugungi Barcha Vaqtlar',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textLight,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -191,11 +205,11 @@ class SolarClockView extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       color: isNext
-                          ? AppTheme.primaryAmber.withValues(alpha: 0.12)
-                          : AppTheme.cardColor,
+                          ? colors.primary.withValues(alpha: context.isDark ? 0.12 : 0.08)
+                          : colors.card,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isNext ? AppTheme.primaryAmber : AppTheme.cardBorder,
+                        color: isNext ? colors.primary : colors.cardBorder,
                         width: isNext ? 1.5 : 1,
                       ),
                     ),
@@ -212,15 +226,15 @@ class SolarClockView extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: isNext ? FontWeight.bold : FontWeight.w500,
-                                  color: AppTheme.textLight,
+                                  color: colors.textPrimary,
                                 ),
                               ),
                               if (isNext)
-                                const Text(
+                                Text(
                                   'Hozirgi / Navbatdagi',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: AppTheme.primaryAmber,
+                                    color: colors.primary,
                                   ),
                                 ),
                             ],
@@ -231,13 +245,13 @@ class SolarClockView extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
-                            color: isNext ? AppTheme.primaryAmber : AppTheme.textLight,
+                            color: isNext ? colors.primary : colors.textPrimary,
                           ),
                         ),
                         const SizedBox(width: 8),
                         IconButton(
                           icon: const Icon(Icons.alarm_add_rounded, size: 20),
-                          color: AppTheme.textMuted,
+                          color: colors.textMuted,
                           onPressed: () => _showAlarmSheet(context, item),
                         ),
                       ],
@@ -255,10 +269,11 @@ class SolarClockView extends StatelessWidget {
   void _showAlarmSheet(BuildContext context, SolarTimeItem item) {
     final cubit = context.read<SolarClockCubit>();
     cubit.selectEvent(item.type);
+    final colors = context.appColors;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.cardColor,
+      backgroundColor: colors.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -266,6 +281,7 @@ class SolarClockView extends StatelessWidget {
         return BlocBuilder<SolarClockCubit, SolarClockState>(
           bloc: cubit,
           builder: (context, state) {
+            final sheetColors = context.appColors;
             return Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
@@ -274,23 +290,23 @@ class SolarClockView extends StatelessWidget {
                 children: [
                   Text(
                     '${item.title} uchun budilnik',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textLight,
+                      color: sheetColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'Vaqt: ${DateFormat('HH:mm').format(item.time)}',
-                    style: const TextStyle(color: AppTheme.textMuted),
+                    style: TextStyle(color: sheetColors.textMuted),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Siljish: ${state.offsetMinutes >= 0 ? "+${state.offsetMinutes}" : "${state.offsetMinutes}"} daqiqa',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryAmber,
+                      color: sheetColors.primary,
                     ),
                   ),
                   Slider(
@@ -298,16 +314,16 @@ class SolarClockView extends StatelessWidget {
                     min: -60,
                     max: 60,
                     divisions: 24,
-                    activeColor: AppTheme.primaryAmber,
-                    inactiveColor: AppTheme.cardBorder,
+                    activeColor: sheetColors.primary,
+                    inactiveColor: sheetColors.cardBorder,
                     label: '${state.offsetMinutes} daq',
                     onChanged: (val) => cubit.setOffset(val.toInt()),
                   ),
                   const SizedBox(height: 14),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryAmber,
-                      foregroundColor: Colors.black,
+                      backgroundColor: sheetColors.primary,
+                      foregroundColor: Colors.white,
                       minimumSize: const Size.fromHeight(48),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:solar_alarm/core/theme/app_theme.dart';
-import 'package:solar_alarm/features/focus_timer/presentation/cubit/focus_timer_cubit.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/theme_cubit.dart';
+import '../../../focus_timer/presentation/cubit/focus_timer_cubit.dart';
 import '../../domain/entities/plan_task.dart';
 import '../cubit/planner_cubit.dart';
 import '../cubit/planner_state.dart';
@@ -13,6 +14,8 @@ class PlannerView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
+
     return BlocBuilder<PlannerCubit, PlannerState>(
       builder: (context, state) {
         final cubit = context.read<PlannerCubit>();
@@ -20,6 +23,16 @@ class PlannerView extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Kunlik Rejalar'),
+            actions: [
+              IconButton(
+                icon: Icon(
+                  context.isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                  color: colors.primary,
+                ),
+                tooltip: context.isDark ? 'Yorug\' rejim' : 'Qorong\'u rejim',
+                onPressed: () => context.read<ThemeCubit>().toggleTheme(),
+              ),
+            ],
           ),
           body: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -33,23 +46,26 @@ class PlannerView extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _buildStat(
+                          context: context,
                           label: 'Rejalar',
                           value: '${state.tasks.length}',
                           icon: Icons.checklist_rounded,
                         ),
-                        Container(width: 1, height: 36, color: AppTheme.cardBorder),
+                        Container(width: 1, height: 36, color: colors.cardBorder),
                         _buildStat(
+                          context: context,
                           label: 'Bajarildi',
                           value: '${state.completedCount}',
                           icon: Icons.check_circle_outline_rounded,
-                          color: Colors.greenAccent,
+                          color: context.isDark ? Colors.greenAccent : Colors.green.shade600,
                         ),
-                        Container(width: 1, height: 36, color: AppTheme.cardBorder),
+                        Container(width: 1, height: 36, color: colors.cardBorder),
                         _buildStat(
+                          context: context,
                           label: 'Fokus vaqti',
                           value: '${state.totalMinutesFocused} d',
                           icon: Icons.hourglass_bottom_rounded,
-                          color: AppTheme.primaryAmber,
+                          color: colors.primary,
                         ),
                       ],
                     ),
@@ -60,11 +76,11 @@ class PlannerView extends StatelessWidget {
                 // Tasks List
                 Expanded(
                   child: state.tasks.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Text(
                             'Hozircha rejalar yo\'q.\nYangi reja qo\'shing!',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: AppTheme.textMuted),
+                            style: TextStyle(color: colors.textMuted),
                           ),
                         )
                       : ListView.separated(
@@ -80,8 +96,8 @@ class PlannerView extends StatelessWidget {
             ),
           ),
           floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: AppTheme.primaryAmber,
-            foregroundColor: Colors.black,
+            backgroundColor: colors.primary,
+            foregroundColor: Colors.white,
             onPressed: () => _showAddTaskSheet(context, cubit),
             icon: const Icon(Icons.add),
             label: const Text('Yangi Reja', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -92,49 +108,53 @@ class PlannerView extends StatelessWidget {
   }
 
   Widget _buildStat({
+    required BuildContext context,
     required String label,
     required String value,
     required IconData icon,
     Color? color,
   }) {
+    final colors = context.appColors;
     return Column(
       children: [
-        Icon(icon, size: 20, color: color ?? AppTheme.textMuted),
+        Icon(icon, size: 20, color: color ?? colors.textMuted),
         const SizedBox(height: 4),
         Text(
           value,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: color ?? AppTheme.textLight,
+            color: color ?? colors.textPrimary,
           ),
         ),
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+          style: TextStyle(fontSize: 11, color: colors.textMuted),
         ),
       ],
     );
   }
 
   Widget _buildTaskTile(BuildContext context, PlanTask task, PlannerCubit cubit) {
+    final colors = context.appColors;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppTheme.cardColor,
+        color: colors.card,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: task.isCompleted
-              ? Colors.greenAccent.withValues(alpha: 0.3)
-              : AppTheme.cardBorder,
+              ? (context.isDark ? Colors.greenAccent.withValues(alpha: 0.3) : Colors.green.withValues(alpha: 0.4))
+              : colors.cardBorder,
         ),
       ),
       child: Row(
         children: [
           Checkbox(
             value: task.isCompleted,
-            activeColor: Colors.greenAccent.shade700,
-            checkColor: Colors.black,
+            activeColor: context.isDark ? Colors.greenAccent.shade700 : Colors.green.shade600,
+            checkColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
             onChanged: (_) => cubit.toggleDone(task.id),
           ),
@@ -148,24 +168,24 @@ class PlannerView extends StatelessWidget {
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                    color: task.isCompleted ? AppTheme.textMuted : AppTheme.textLight,
+                    color: task.isCompleted ? colors.textMuted : colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Fokus: ${task.completedMinutes}/${task.targetMinutes} daq',
-                  style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                  style: TextStyle(fontSize: 12, color: colors.textMuted),
                 ),
               ],
             ),
           ),
           IconButton(
             tooltip: 'Qumsoatga biriktirish',
-            icon: const Icon(Icons.hourglass_top_rounded, color: AppTheme.primaryAmber, size: 20),
+            icon: Icon(Icons.hourglass_top_rounded, color: colors.primary, size: 20),
             onPressed: () {
               context.read<FocusTimerCubit>().attachTask(task.id, task.title);
               context.read<FocusTimerCubit>().setDurationMinutes(task.targetMinutes);
-              onSwitchTab?.call(1); // switch to Qumsoat tab
+              onSwitchTab?.call(1);
             },
           ),
           IconButton(
@@ -180,17 +200,19 @@ class PlannerView extends StatelessWidget {
   void _showAddTaskSheet(BuildContext context, PlannerCubit cubit) {
     final titleController = TextEditingController();
     int targetMinutes = 25;
+    final colors = context.appColors;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.cardColor,
+      backgroundColor: colors.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final sheetColors = context.appColors;
             return Padding(
               padding: EdgeInsets.only(
                 left: 20,
@@ -202,27 +224,35 @@ class PlannerView extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
+                  Text(
                     'Yangi Reja Qo\'shish',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textLight,
+                      color: sheetColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 14),
                   TextField(
                     controller: titleController,
                     autofocus: true,
-                    style: const TextStyle(color: AppTheme.textLight),
+                    style: TextStyle(color: sheetColors.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Reja nomi (masalan: Dasturlash, Kitob mutolaasi)',
-                      hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
+                      hintStyle: TextStyle(color: sheetColors.textMuted, fontSize: 14),
                       filled: true,
-                      fillColor: Colors.black26,
+                      fillColor: context.isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.04),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppTheme.cardBorder),
+                        borderSide: BorderSide(color: sheetColors.cardBorder),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: sheetColors.cardBorder),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: sheetColors.primary, width: 1.5),
                       ),
                     ),
                   ),
@@ -230,10 +260,10 @@ class PlannerView extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Mo\'ljallangan fokus vaqti:', style: TextStyle(color: AppTheme.textMuted)),
+                      Text('Mo\'ljallangan fokus vaqti:', style: TextStyle(color: sheetColors.textMuted)),
                       Text('$targetMinutes daqiqa',
-                          style: const TextStyle(
-                              color: AppTheme.primaryAmber, fontWeight: FontWeight.bold)),
+                          style: TextStyle(
+                              color: sheetColors.primary, fontWeight: FontWeight.bold)),
                     ],
                   ),
                   Slider(
@@ -241,16 +271,16 @@ class PlannerView extends StatelessWidget {
                     min: 5,
                     max: 120,
                     divisions: 23,
-                    activeColor: AppTheme.primaryAmber,
-                    inactiveColor: AppTheme.cardBorder,
+                    activeColor: sheetColors.primary,
+                    inactiveColor: sheetColors.cardBorder,
                     label: '$targetMinutes daq',
                     onChanged: (val) => setModalState(() => targetMinutes = val.toInt()),
                   ),
                   const SizedBox(height: 14),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryAmber,
-                      foregroundColor: Colors.black,
+                      backgroundColor: sheetColors.primary,
+                      foregroundColor: Colors.white,
                       minimumSize: const Size.fromHeight(48),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
