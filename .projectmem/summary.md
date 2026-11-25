@@ -13,7 +13,6 @@ A new Flutter project.
 - Adopt 'Uyg'otgich' as pure Uzbek name for alarm, replace frustrating math addition mission with interactive Solar Rays Wake-up mission (5 gentle sun taps with morning affirmation)
 
 ## Notes
-- refactor: migrate project structure to DDD clean architecture with feature modules
 - feat: add solar clock, focus timer, and planner features with navigation
 - feat: add flutter_launcher_icons dependency and configuration
 - feat: update application launcher icons for Android and iOS
@@ -23,6 +22,7 @@ A new Flutter project.
 - feat: add task categories and filtering to planner view
 - New feature: feat: migrate focus timer and navigation to iOS Cupertino design and add wakelock support [lib/core/theme/app_theme.dart]
 - New feature: feat: add Patrol E2E test suite and integration test configuration [integration_test/app_e2e_test.dart]
+- Removed math mission remnants (mathOperand1/2, mathAnswer, verifyMathAndDismiss) from AlarmState and AlarmCubit. Created full-screen RingingPage (iOS black style, pulsing sun ScaleTransition, animated progress dots, fade route transition). alarm_view.dart now pushes RingingPage via rootNavigator instead of showing AlertDialog. Added patrol E2E test for alarm creation flow.
 
 ## Key files
 - `.gitignore`

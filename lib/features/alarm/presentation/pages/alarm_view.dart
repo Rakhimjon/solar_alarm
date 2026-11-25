@@ -7,6 +7,7 @@ import '../../domain/entities/alarm_item.dart';
 import '../cubit/alarm_cubit.dart';
 import '../cubit/alarm_state.dart';
 import 'add_edit_alarm_page.dart';
+import 'ringing_page.dart';
 
 class AlarmView extends StatelessWidget {
   final Function(int)? onSwitchTab;
@@ -23,7 +24,15 @@ class AlarmView extends StatelessWidget {
           (curr.isRinging && !prev.isRinging),
       listener: (context, state) {
         if (state.isRinging) {
-          _showRingingDialog(context, state);
+          Navigator.of(context, rootNavigator: true).push(
+            PageRouteBuilder(
+              opaque: true,
+              pageBuilder: (_, __, ___) => RingingPage(onSwitchTab: onSwitchTab),
+              transitionsBuilder: (_, anim, __, child) =>
+                  FadeTransition(opacity: anim, child: child),
+              transitionDuration: const Duration(milliseconds: 400),
+            ),
+          );
         } else if (state.message != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -88,11 +97,16 @@ class AlarmView extends StatelessWidget {
                             backgroundColor: colors.primary,
                             foregroundColor: Colors.white,
                             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
                           ),
                           onPressed: () => _openAddEdit(context),
                           icon: Icon(Icons.add_alarm_rounded, size: 20.r),
-                          label: Text('Uyg\'otgich Qo\'shish', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold)),
+                          label: Text(
+                            'Uyg\'otgich Qo\'shish',
+                            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ],
                     ),
@@ -113,7 +127,10 @@ class AlarmView extends StatelessWidget {
                   foregroundColor: Colors.white,
                   onPressed: () => _openAddEdit(context),
                   icon: Icon(Icons.alarm_add_rounded, size: 20.r),
-                  label: Text('Yangi Uyg\'otgich', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp)),
+                  label: Text(
+                    'Yangi Uyg\'otgich',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
+                  ),
                 ),
         );
       },
@@ -141,7 +158,9 @@ class AlarmView extends StatelessWidget {
           color: colors.card,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
-            color: alarm.isEnabled ? colors.primary.withValues(alpha: 0.4) : colors.cardBorder,
+            color: alarm.isEnabled
+                ? colors.primary.withValues(alpha: 0.4)
+                : colors.cardBorder,
           ),
         ),
         child: Row(
@@ -165,7 +184,9 @@ class AlarmView extends StatelessWidget {
                         child: Container(
                           padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                           decoration: BoxDecoration(
-                            color: colors.primary.withValues(alpha: context.isDark ? 0.15 : 0.08),
+                            color: colors.primary.withValues(
+                              alpha: context.isDark ? 0.15 : 0.08,
+                            ),
                             borderRadius: BorderRadius.circular(8.r),
                           ),
                           child: Text(
@@ -188,7 +209,8 @@ class AlarmView extends StatelessWidget {
                     children: [
                       if (alarm.hasSolarLink)
                         _miniBadge(
-                          '📍 ${_solarNameUz(alarm.linkedSolarType)} (${alarm.solarOffsetMinutes >= 0 ? "+" : ""}${alarm.solarOffsetMinutes} daq)',
+                          '📍 ${_solarNameUz(alarm.linkedSolarType)} '
+                          '(${alarm.solarOffsetMinutes >= 0 ? "+" : ""}${alarm.solarOffsetMinutes} daq)',
                           colors.primary,
                           colors,
                         ),
@@ -222,7 +244,11 @@ class AlarmView extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: TextStyle(fontSize: 10.sp, color: textColor, fontWeight: FontWeight.w500),
+        style: TextStyle(
+          fontSize: 10.sp,
+          color: textColor,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
@@ -244,196 +270,5 @@ class AlarmView extends StatelessWidget {
       default:
         return 'Quyosh';
     }
-  }
-
-  void _showRingingDialog(BuildContext context, AlarmState state) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return BlocBuilder<AlarmCubit, AlarmState>(
-          builder: (context, currentState) {
-            final colors = context.appColors;
-            final remainingTaps = currentState.remainingSunTaps;
-            final hasMission = currentState.ringingRequireMath && remainingTaps > 0;
-
-            return AlertDialog(
-              backgroundColor: colors.card,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
-              title: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.wb_sunny_rounded, color: Colors.amber.shade600, size: 28.r),
-                    SizedBox(width: 8.w),
-                    Text(
-                      'Uyg\'otgich Jiringlamoqda!',
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      currentState.ringingAlarmLabel ?? 'Vaqt bo\'ldi!',
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 12.h),
-
-                    // Morning Positive Affirmation Card
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(14.r),
-                        border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
-                      ),
-                      child: Text(
-                        '✨ ${currentState.morningAffirmation}',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12.5.sp,
-                          fontStyle: FontStyle.italic,
-                          color: colors.textPrimary,
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-
-                    // Creative Solar Rays Wake-Up Mission
-                    if (hasMission) ...[
-                      Column(
-                        children: [
-                          Text(
-                            '☀️ Quyosh Nurlari Missiyasi',
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.bold,
-                              color: colors.primary,
-                            ),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            'Uyg\'onish uchun quyoshga $remainingTaps marta teging',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: colors.textMuted,
-                            ),
-                          ),
-                          SizedBox(height: 14.h),
-                          GestureDetector(
-                            onTap: () {
-                              context.read<AlarmCubit>().tapSunRay();
-                              if (remainingTaps <= 1) {
-                                Navigator.pop(dialogContext);
-                              }
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              width: 90.r,
-                              height: 90.r,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: const RadialGradient(
-                                  colors: [Color(0xFFFDE68A), Color(0xFFF59E0B), Color(0xFFD97706)],
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.amber.withValues(alpha: 0.5),
-                                    blurRadius: 18,
-                                    spreadRadius: 3,
-                                  ),
-                                ],
-                              ),
-                              alignment: Alignment.center,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.wb_sunny_rounded, color: Colors.white, size: 36.r),
-                                  Text(
-                                    '$remainingTaps',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16.sp,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 18.h),
-                    ],
-
-                    // Wake-up to Deep Work CTA Button
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFD97706)]),
-                        borderRadius: BorderRadius.circular(14.r),
-                      ),
-                      child: TextButton.icon(
-                        icon: const Icon(Icons.hourglass_top_rounded, color: Colors.white),
-                        label: Text(
-                          '🚀 25 d Fokus bilan boshlash',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13.5.sp,
-                          ),
-                        ),
-                        onPressed: () {
-                          context.read<AlarmCubit>().dismissRinging();
-                          Navigator.pop(dialogContext);
-                          onSwitchTab?.call(1); // Jump straight to Qumsoat focus!
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    context.read<AlarmCubit>().snoozeRinging(minutes: 5);
-                    Navigator.pop(dialogContext);
-                  },
-                  child: Text(
-                    '5 daqiqa kuting (Snooze)',
-                    style: TextStyle(color: colors.textMuted, fontSize: 13.sp),
-                  ),
-                ),
-                if (!hasMission)
-                  TextButton(
-                    onPressed: () {
-                      context.read<AlarmCubit>().dismissRinging();
-                      Navigator.pop(dialogContext);
-                    },
-                    child: const Text(
-                      'To\'xtatish',
-                      style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-              ],
-            );
-          },
-        );
-      },
-    );
   }
 }

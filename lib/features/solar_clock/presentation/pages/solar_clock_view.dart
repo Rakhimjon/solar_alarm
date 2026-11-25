@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/theme_cubit.dart';
+import '../../data/datasources/prayer_times_remote_datasource.dart';
 import '../../domain/entities/solar_time_item.dart';
 import '../cubit/solar_clock_cubit.dart';
 import '../cubit/solar_clock_state.dart';
@@ -42,6 +43,36 @@ class SolarClockView extends StatelessWidget {
           appBar: AppBar(
             title: const Text('Quyosh & Namoz Soati'),
             actions: [
+              // ── Viloyat tanlash ──────────────────────
+              BlocBuilder<SolarClockCubit, SolarClockState>(
+                buildWhen: (p, c) => p.region != c.region,
+                builder: (context, state) {
+                  return PopupMenuButton<String>(
+                    tooltip: 'Viloyat tanlash',
+                    icon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.location_on_rounded, color: colors.primary, size: 18),
+                        const SizedBox(width: 2),
+                        Text(
+                          state.region,
+                          style: TextStyle(
+                            color: colors.primary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Icon(Icons.arrow_drop_down, color: colors.primary, size: 18),
+                      ],
+                    ),
+                    onSelected: (region) =>
+                        context.read<SolarClockCubit>().setRegion(region),
+                    itemBuilder: (_) => kUzbekRegions
+                        .map((r) => PopupMenuItem(value: r, child: Text(r)))
+                        .toList(),
+                  );
+                },
+              ),
               IconButton(
                 icon: Icon(
                   context.isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,

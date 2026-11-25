@@ -20,16 +20,16 @@ class SolarClockRepositoryImpl implements SolarClockRepository {
     required DateTime date,
     required double lat,
     required double lng,
+    String region = 'Toshkent',
   }) async {
     try {
       final remote = await remoteDataSource.fetchDayCycle(
         date: date,
         lat: lat,
         lng: lng,
+        region: region,
       );
-      if (remote != null) {
-        return remote;
-      }
+      if (remote != null) return remote;
     } catch (_) {}
 
     return calculator.calculateCycle(date: date, lat: lat, lng: lng);

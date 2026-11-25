@@ -24,6 +24,7 @@ class SolarClockCubit extends Cubit<SolarClockState> {
       date: DateTime.now(),
       lat: state.lat,
       lng: state.lng,
+      region: state.region,
     );
     emit(state.copyWith(
       status: SolarClockStatus.loaded,
@@ -37,6 +38,11 @@ class SolarClockCubit extends Cubit<SolarClockState> {
 
   void setOffset(int offset) {
     emit(state.copyWith(offsetMinutes: offset));
+  }
+
+  void setRegion(String region) {
+    emit(state.copyWith(region: region, status: SolarClockStatus.loading));
+    refreshCycle();
   }
 
   Future<void> scheduleAlarm() async {

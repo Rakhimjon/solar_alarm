@@ -29,17 +29,12 @@ class AlarmCubit extends Cubit<AlarmState> {
         final ringingAlarm = alarmSet.alarms.first;
         final match = state.alarms.where((a) => a.id == ringingAlarm.id).firstOrNull;
 
-        final rand = Random();
-        final op1 = 15 + rand.nextInt(35);
-        final op2 = 12 + rand.nextInt(40);
-        final affirmation = _affirmations[rand.nextInt(_affirmations.length)];
+        final affirmation = _affirmations[Random().nextInt(_affirmations.length)];
 
         emit(state.copyWith(
           ringingAlarmId: ringingAlarm.id,
           ringingAlarmLabel: match?.label ?? ringingAlarm.notificationSettings.title,
           ringingRequireMath: match?.requireMathMission ?? false,
-          mathOperand1: op1,
-          mathOperand2: op2,
           remainingSunTaps: 5,
           morningAffirmation: affirmation,
         ));
@@ -108,14 +103,6 @@ class AlarmCubit extends Cubit<AlarmState> {
       emit(state.copyWith(remainingSunTaps: 0));
       dismissRinging();
     }
-  }
-
-  bool verifyMathAndDismiss(int userAnswer) {
-    if (userAnswer == state.mathAnswer) {
-      dismissRinging();
-      return true;
-    }
-    return false;
   }
 
   Future<void> dismissRinging() async {

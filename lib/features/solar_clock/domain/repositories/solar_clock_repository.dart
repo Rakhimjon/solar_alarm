@@ -5,6 +5,7 @@ abstract class SolarClockRepository {
     required DateTime date,
     required double lat,
     required double lng,
+    String region,
   });
 
   Future<DateTime> scheduleAlarm({

@@ -11,6 +11,7 @@ class SolarClockState {
   final String? message;
   final double lat;
   final double lng;
+  final String region;
 
   const SolarClockState({
     this.status = SolarClockStatus.initial,
@@ -21,6 +22,7 @@ class SolarClockState {
     this.message,
     this.lat = 41.311081,
     this.lng = 69.240562,
+    this.region = 'Toshkent',
   });
 
   SolarClockState copyWith({
@@ -32,6 +34,7 @@ class SolarClockState {
     String? message,
     double? lat,
     double? lng,
+    String? region,
   }) {
     return SolarClockState(
       status: status ?? this.status,
@@ -42,6 +45,8 @@ class SolarClockState {
       message: message,
       lat: lat ?? this.lat,
       lng: lng ?? this.lng,
+      region: region ?? this.region,
     );
   }
 }
+
