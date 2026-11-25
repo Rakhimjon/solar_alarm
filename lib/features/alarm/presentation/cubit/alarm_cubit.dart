@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:math';
+
 import 'package:alarm/alarm.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../domain/entities/alarm_item.dart';
 import '../../domain/repositories/alarm_repository.dart';
 import 'alarm_state.dart';
@@ -19,7 +21,7 @@ class AlarmCubit extends Cubit<AlarmState> {
   ];
 
   AlarmCubit({required this.repository}) : super(const AlarmState()) {
-    loadAlarms();
+    loadAlarms(reschedule: true);
     _initRingListener();
   }
 
@@ -27,28 +29,48 @@ class AlarmCubit extends Cubit<AlarmState> {
     _ringSubscription = Alarm.ringing.listen((alarmSet) {
       if (alarmSet.alarms.isNotEmpty) {
         final ringingAlarm = alarmSet.alarms.first;
-        final match = state.alarms.where((a) => a.id == ringingAlarm.id).firstOrNull;
+        final match = state.alarms
+            .where((a) => a.id == ringingAlarm.id)
+            .firstOrNull;
 
-        final affirmation = _affirmations[Random().nextInt(_affirmations.length)];
+        final affirmation =
+            _affirmations[Random().nextInt(_affirmations.length)];
 
-        emit(state.copyWith(
-          ringingAlarmId: ringingAlarm.id,
-          ringingAlarmLabel: match?.label ?? ringingAlarm.notificationSettings.title,
-          ringingRequireMath: match?.requireMathMission ?? false,
-          remainingSunTaps: 5,
-          morningAffirmation: affirmation,
-        ));
+        emit(
+          state.copyWith(
+            ringingAlarmId: ringingAlarm.id,
+            ringingAlarmLabel:
+                match?.label ?? ringingAlarm.notificationSettings.title,
+            ringingRequireMath: match?.requireMathMission ?? false,
+            remainingSunTaps: 5,
+            morningAffirmation: affirmation,
+          ),
+        );
       } else if (state.isRinging) {
         emit(state.copyWith(clearRinging: true));
       }
     });
   }
 
-  Future<void> loadAlarms() async {
+  Future<void> loadAlarms({bool reschedule = false}) async {
     emit(state.copyWith(isLoading: true));
-    final alarms = await repository.getAlarms();
-    alarms.sort((a, b) => (a.hour * 60 + a.minute).compareTo(b.hour * 60 + b.minute));
-    emit(state.copyWith(alarms: alarms, isLoading: false));
+    try {
+      if (reschedule) await repository.rescheduleAlarms();
+      final alarms = await repository.getAlarms();
+      if (isClosed) return;
+      alarms.sort(
+        (a, b) => (a.hour * 60 + a.minute).compareTo(b.hour * 60 + b.minute),
+      );
+      emit(state.copyWith(alarms: alarms, isLoading: false));
+    } catch (_) {
+      if (isClosed) return;
+      emit(
+        state.copyWith(
+          isLoading: false,
+          message: 'Uyg\'otgichlarni yuklash imkoni bo\'lmadi',
+        ),
+      );
+    }
   }
 
   Future<void> saveAlarm({
@@ -62,6 +84,9 @@ class AlarmCubit extends Cubit<AlarmState> {
     bool requireMathMission = false,
     String? linkedSolarType,
     int solarOffsetMinutes = 0,
+    double lat = 41.311081,
+    double lng = 69.240562,
+    String region = 'Toshkent',
     int? existingId,
   }) async {
     final id = existingId ?? DateTime.now().millisecondsSinceEpoch % 100000;
@@ -77,6 +102,9 @@ class AlarmCubit extends Cubit<AlarmState> {
       requireMathMission: requireMathMission,
       linkedSolarType: linkedSolarType,
       solarOffsetMinutes: solarOffsetMinutes,
+      lat: lat,
+      lng: lng,
+      region: region,
       isEnabled: true,
     );
 
@@ -86,8 +114,17 @@ class AlarmCubit extends Cubit<AlarmState> {
   }
 
   Future<void> toggleAlarm(int id) async {
-    await repository.toggleAlarm(id);
-    await loadAlarms();
+    try {
+      await repository.toggleAlarm(id);
+      await loadAlarms();
+    } catch (_) {
+      if (isClosed) return;
+      emit(
+        state.copyWith(
+          message: 'Uyg\'otgich holatini o\'zgartirish imkoni bo\'lmadi',
+        ),
+      );
+    }
   }
 
   Future<void> deleteAlarm(int id) async {
@@ -109,7 +146,9 @@ class AlarmCubit extends Cubit<AlarmState> {
     final id = state.ringingAlarmId;
     if (id != null) {
       await repository.stopRinging(id);
+      await loadAlarms();
     }
+    if (isClosed) return;
     emit(state.copyWith(clearRinging: true));
   }
 
@@ -118,10 +157,12 @@ class AlarmCubit extends Cubit<AlarmState> {
     if (id != null) {
       await repository.snoozeAlarm(id, minutes: minutes);
     }
-    emit(state.copyWith(
-      clearRinging: true,
-      message: 'Uyg\'otgich $minutes daqiqaga kechiktirildi',
-    ));
+    emit(
+      state.copyWith(
+        clearRinging: true,
+        message: 'Uyg\'otgich $minutes daqiqaga kechiktirildi',
+      ),
+    );
   }
 
   @override

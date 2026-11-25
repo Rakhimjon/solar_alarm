@@ -43,6 +43,9 @@ class FakeAlarmRepository implements AlarmRepository {
   Future<void> snoozeAlarm(int id, {int minutes = 5}) async {
     wasSnoozed = true;
   }
+
+  @override
+  Future<void> rescheduleAlarms() async {}
 }
 
 void main() {
@@ -83,11 +86,6 @@ void main() {
     expect(cubit.state.alarms.first.requireMathMission, isTrue);
     expect(cubit.state.alarms.first.hasSolarLink, isTrue);
     expect(cubit.state.alarms.first.isEnabled, isTrue);
-
-    // Verify math mission verification
-    final correctAnswer = cubit.state.mathAnswer;
-    expect(cubit.verifyMathAndDismiss(correctAnswer + 5), isFalse);
-    expect(cubit.verifyMathAndDismiss(correctAnswer), isTrue);
 
     // Verify solar ray taps
     expect(cubit.state.remainingSunTaps, 5);

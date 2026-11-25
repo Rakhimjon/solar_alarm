@@ -42,16 +42,23 @@ class FocusTimerState {
     bool? isLocked,
     String? warningMessage,
     bool clearWarning = false,
+    bool clearActiveTask = false,
   }) {
     return FocusTimerState(
       status: status ?? this.status,
       totalSeconds: totalSeconds ?? this.totalSeconds,
       remainingSeconds: remainingSeconds ?? this.remainingSeconds,
-      activeTaskId: activeTaskId ?? this.activeTaskId,
-      activeTaskTitle: activeTaskTitle ?? this.activeTaskTitle,
+      activeTaskId: clearActiveTask
+          ? null
+          : (activeTaskId ?? this.activeTaskId),
+      activeTaskTitle: clearActiveTask
+          ? null
+          : (activeTaskTitle ?? this.activeTaskTitle),
       isDeepWorkEnabled: isDeepWorkEnabled ?? this.isDeepWorkEnabled,
       isLocked: isLocked ?? this.isLocked,
-      warningMessage: clearWarning ? null : (warningMessage ?? this.warningMessage),
+      warningMessage: clearWarning
+          ? null
+          : (warningMessage ?? this.warningMessage),
     );
   }
 }

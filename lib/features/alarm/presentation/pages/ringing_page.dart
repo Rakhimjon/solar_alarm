@@ -1,10 +1,12 @@
 import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+
 import '../cubit/alarm_cubit.dart';
 import '../cubit/alarm_state.dart';
 
@@ -17,7 +19,8 @@ class RingingPage extends StatefulWidget {
   State<RingingPage> createState() => _RingingPageState();
 }
 
-class _RingingPageState extends State<RingingPage> with SingleTickerProviderStateMixin {
+class _RingingPageState extends State<RingingPage>
+    with SingleTickerProviderStateMixin {
   late Timer _clockTimer;
   late DateTime _now;
   late AnimationController _pulseController;
@@ -68,7 +71,10 @@ class _RingingPageState extends State<RingingPage> with SingleTickerProviderStat
                     // ── Clock + Label ──────────────────────────────
                     Expanded(
                       flex: 3,
-                      child: _ClockSection(now: _now, label: state.ringingAlarmLabel),
+                      child: _ClockSection(
+                        now: _now,
+                        label: state.ringingAlarmLabel,
+                      ),
                     ),
 
                     // ── Affirmation + Mission ──────────────────────
@@ -104,8 +110,11 @@ class _RingingPageState extends State<RingingPage> with SingleTickerProviderStat
                           context.read<AlarmCubit>().dismissRinging();
                           widget.onSwitchTab?.call(1);
                         },
-                        onSnooze: () => context.read<AlarmCubit>().snoozeRinging(minutes: 5),
-                        onDismiss: () => context.read<AlarmCubit>().dismissRinging(),
+                        onSnooze: () => context
+                            .read<AlarmCubit>()
+                            .snoozeRinging(minutes: 5),
+                        onDismiss: () =>
+                            context.read<AlarmCubit>().dismissRinging(),
                       ),
                     ),
                   ],
@@ -235,40 +244,52 @@ class _SunMission extends StatelessWidget {
           style: TextStyle(fontSize: 12.sp, color: Colors.white38),
         ),
         SizedBox(height: 20.h),
-        GestureDetector(
-          onTap: onTap,
-          child: ScaleTransition(
-            scale: pulseAnimation,
-            child: Container(
-              width: 108.r,
-              height: 108.r,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const RadialGradient(
-                  colors: [Color(0xFFFDE68A), Color(0xFFF59E0B), Color(0xFFD97706)],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.amber.withValues(alpha: 0.55),
-                    blurRadius: 32,
-                    spreadRadius: 6,
+        Semantics(
+          button: true,
+          label: 'Quyoshga teginish, $remaining marta qoldi',
+          child: GestureDetector(
+            onTap: onTap,
+            child: ScaleTransition(
+              scale: pulseAnimation,
+              child: Container(
+                width: 108.r,
+                height: 108.r,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const RadialGradient(
+                    colors: [
+                      Color(0xFFFDE68A),
+                      Color(0xFFF59E0B),
+                      Color(0xFFD97706),
+                    ],
                   ),
-                ],
-              ),
-              alignment: Alignment.center,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.wb_sunny_rounded, color: Colors.white, size: 42.r),
-                  Text(
-                    '$remaining',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.amber.withValues(alpha: 0.55),
+                      blurRadius: 32,
+                      spreadRadius: 6,
                     ),
-                  ),
-                ],
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.wb_sunny_rounded,
+                      color: Colors.black87,
+                      size: 42.r,
+                    ),
+                    Text(
+                      '$remaining',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -324,12 +345,16 @@ class _BottomActions extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(CupertinoIcons.hourglass, color: Colors.white, size: 18.r),
+                  Icon(
+                    CupertinoIcons.hourglass,
+                    color: Colors.black87,
+                    size: 18.r,
+                  ),
                   SizedBox(width: 8.w),
                   Text(
                     '🚀 25 daq Fokus bilan boshlash',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.black87,
                       fontWeight: FontWeight.bold,
                       fontSize: 14.sp,
                     ),

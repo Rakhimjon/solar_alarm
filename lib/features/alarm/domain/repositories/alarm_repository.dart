@@ -7,4 +7,5 @@ abstract class AlarmRepository {
   Future<void> toggleAlarm(int id);
   Future<void> stopRinging(int id);
   Future<void> snoozeAlarm(int id, {int minutes = 5});
+  Future<void> rescheduleAlarms();
 }

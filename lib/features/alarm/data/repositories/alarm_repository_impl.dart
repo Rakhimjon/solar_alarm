@@ -23,5 +23,9 @@ class AlarmRepositoryImpl implements AlarmRepository {
   Future<void> stopRinging(int id) => localStorage.stopRinging(id);
 
   @override
-  Future<void> snoozeAlarm(int id, {int minutes = 5}) => localStorage.snoozeAlarm(id, minutes);
+  Future<void> snoozeAlarm(int id, {int minutes = 5}) =>
+      localStorage.snoozeAlarm(id, minutes);
+
+  @override
+  Future<void> rescheduleAlarms() => localStorage.rescheduleAlarms();
 }

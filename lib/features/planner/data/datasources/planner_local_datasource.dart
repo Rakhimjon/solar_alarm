@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../domain/entities/plan_task.dart';
 
 class PlannerLocalDataSource {
@@ -22,7 +24,9 @@ class PlannerLocalDataSource {
           targetMinutes: (map['targetMinutes'] as num?)?.toInt() ?? 25,
           completedMinutes: (map['completedMinutes'] as num?)?.toInt() ?? 0,
           isCompleted: map['isCompleted'] as bool? ?? false,
-          createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+          useTimer: map['useTimer'] as bool? ?? true,
+          createdAt:
+              DateTime.tryParse(map['createdAt'] as String? ?? '') ??
               DateTime.now(),
           category: map['category'] as String?,
         );
@@ -33,15 +37,20 @@ class PlannerLocalDataSource {
   }
 
   Future<void> saveTasks(List<PlanTask> tasks) async {
-    final list = tasks.map((t) => {
-          'id': t.id,
-          'title': t.title,
-          'targetMinutes': t.targetMinutes,
-          'completedMinutes': t.completedMinutes,
-          'isCompleted': t.isCompleted,
-          'createdAt': t.createdAt.toIso8601String(),
-          'category': t.category,
-        }).toList();
+    final list = tasks
+        .map(
+          (t) => {
+            'id': t.id,
+            'title': t.title,
+            'targetMinutes': t.targetMinutes,
+            'completedMinutes': t.completedMinutes,
+            'isCompleted': t.isCompleted,
+            'useTimer': t.useTimer,
+            'createdAt': t.createdAt.toIso8601String(),
+            'category': t.category,
+          },
+        )
+        .toList();
 
     await prefs.setString(_keyTasks, jsonEncode(list));
   }

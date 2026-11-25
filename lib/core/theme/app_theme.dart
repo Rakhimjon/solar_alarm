@@ -7,6 +7,7 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color card;
   final Color cardBorder;
   final Color primary;
+  final Color onPrimary;
   final Color accent;
   final Color textPrimary;
   final Color textMuted;
@@ -17,6 +18,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.card,
     required this.cardBorder,
     required this.primary,
+    required this.onPrimary,
     required this.accent,
     required this.textPrimary,
     required this.textMuted,
@@ -28,6 +30,7 @@ class AppColors extends ThemeExtension<AppColors> {
     card: Color(0xFF18202C),
     cardBorder: Color(0xFF263244),
     primary: Color(0xFFF59E0B),
+    onPrimary: Color(0xFF0F172A),
     accent: Color(0xFFFBBF24),
     textPrimary: Color(0xFFF1F5F9),
     textMuted: Color(0xFF94A3B8),
@@ -39,6 +42,7 @@ class AppColors extends ThemeExtension<AppColors> {
     card: Color(0xFFFFFFFF),
     cardBorder: Color(0xFFE2E8F0),
     primary: Color(0xFFD97706),
+    onPrimary: Color(0xFF0F172A),
     accent: Color(0xFFF59E0B),
     textPrimary: Color(0xFF0F172A),
     textMuted: Color(0xFF64748B),
@@ -51,6 +55,7 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? card,
     Color? cardBorder,
     Color? primary,
+    Color? onPrimary,
     Color? accent,
     Color? textPrimary,
     Color? textMuted,
@@ -61,6 +66,7 @@ class AppColors extends ThemeExtension<AppColors> {
       card: card ?? this.card,
       cardBorder: cardBorder ?? this.cardBorder,
       primary: primary ?? this.primary,
+      onPrimary: onPrimary ?? this.onPrimary,
       accent: accent ?? this.accent,
       textPrimary: textPrimary ?? this.textPrimary,
       textMuted: textMuted ?? this.textMuted,
@@ -76,6 +82,7 @@ class AppColors extends ThemeExtension<AppColors> {
       card: Color.lerp(card, other.card, t)!,
       cardBorder: Color.lerp(cardBorder, other.cardBorder, t)!,
       primary: Color.lerp(primary, other.primary, t)!,
+      onPrimary: Color.lerp(onPrimary, other.onPrimary, t)!,
       accent: Color.lerp(accent, other.accent, t)!,
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
       textMuted: Color.lerp(textMuted, other.textMuted, t)!,
@@ -88,7 +95,8 @@ extension ThemeContextExtension on BuildContext {
   ThemeData get theme => Theme.of(this);
   bool get isDark => theme.brightness == Brightness.dark;
   AppColors get appColors =>
-      theme.extension<AppColors>() ?? (isDark ? AppColors.dark : AppColors.light);
+      theme.extension<AppColors>() ??
+      (isDark ? AppColors.dark : AppColors.light);
 }
 
 class AppTheme {
@@ -110,6 +118,7 @@ class AppTheme {
       cardColor: cardColor,
       colorScheme: const ColorScheme.dark(
         primary: primaryAmber,
+        onPrimary: Color(0xFF0F172A),
         secondary: accentGold,
         surface: cardColor,
         onSurface: textLight,
@@ -165,6 +174,7 @@ class AppTheme {
       cardColor: lightCard,
       colorScheme: const ColorScheme.light(
         primary: lightPrimary,
+        onPrimary: Color(0xFF0F172A),
         secondary: Color(0xFFF59E0B),
         surface: lightCard,
         onSurface: lightTextPrimary,

@@ -33,11 +33,14 @@ class PlannerState {
     List<PlanTask>? tasks,
     String? activeTaskId,
     String? message,
+    bool clearActiveTask = false,
   }) {
     return PlannerState(
       status: status ?? this.status,
       tasks: tasks ?? this.tasks,
-      activeTaskId: activeTaskId ?? this.activeTaskId,
+      activeTaskId: clearActiveTask
+          ? null
+          : (activeTaskId ?? this.activeTaskId),
       message: message,
     );
   }

@@ -14,6 +14,7 @@ class FakeRemoteDataSource implements PrayerTimesRemoteDataSource {
     required DateTime date,
     required double lat,
     required double lng,
+    String region = 'Toshkent',
   }) async {
     return mockCycle;
   }

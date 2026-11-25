@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'core/services/kiosk_service.dart';
 import 'core/theme/theme_cubit.dart';
 import 'features/alarm/data/datasources/alarm_local_storage.dart';
@@ -42,7 +43,10 @@ Future<void> initDi() async {
     () => PlannerLocalDataSource(prefs: sl<SharedPreferences>()),
   );
   sl.registerLazySingleton<AlarmLocalStorage>(
-    () => AlarmLocalStorageImpl(prefs: sl<SharedPreferences>()),
+    () => AlarmLocalStorageImpl(
+      prefs: sl<SharedPreferences>(),
+      solarClockRepository: sl<SolarClockRepository>(),
+    ),
   );
 
   // 3. Repositories
@@ -54,9 +58,7 @@ Future<void> initDi() async {
     ),
   );
   sl.registerLazySingleton<PlanRepository>(
-    () => PlanRepositoryImpl(
-      localDataSource: sl<PlannerLocalDataSource>(),
-    ),
+    () => PlanRepositoryImpl(localDataSource: sl<PlannerLocalDataSource>()),
   );
   sl.registerLazySingleton<AlarmRepository>(
     () => AlarmRepositoryImpl(localStorage: sl<AlarmLocalStorage>()),

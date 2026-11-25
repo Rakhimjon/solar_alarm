@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import '../../../../core/services/alarm_permissions.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../solar_clock/presentation/cubit/solar_clock_cubit.dart';
 import '../../domain/entities/alarm_item.dart';
 import '../cubit/alarm_cubit.dart';
 
@@ -24,6 +27,7 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
   late List<int> _repeatDays;
   late bool _vibrate;
   late bool _requireMath;
+  bool _isSaving = false;
 
   bool get isEditing => widget.initialAlarm != null;
 
@@ -63,25 +67,59 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
     super.dispose();
   }
 
-  void _save() {
-    final cubit = context.read<AlarmCubit>();
-    final label = _labelController.text.trim();
+  Future<void> _save() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
 
-    cubit.saveAlarm(
-      existingId: widget.initialAlarm?.id,
-      hour: _selectedTime.hour,
-      minute: _selectedTime.minute,
-      label: label.isEmpty ? 'Budilnik' : label,
-      soundPath: _selectedSound.path,
-      soundTitle: _selectedSound.title,
-      repeatDays: _repeatDays,
-      vibrate: _vibrate,
-      requireMathMission: _requireMath,
-      linkedSolarType: _modeIndex == 1 ? _selectedSolarEvent : null,
-      solarOffsetMinutes: _modeIndex == 1 ? _solarOffset : 0,
-    );
+    try {
+      final permissionsGranted = await AlarmPermissions.ensure();
+      if (!mounted) return;
+      if (!permissionsGranted) {
+        _showError('Bildirishnoma va aniq uyg\'otgich ruxsatlarini bering');
+        return;
+      }
 
-    Navigator.pop(context);
+      final solarState = context.read<SolarClockCubit>().state;
+      final label = _labelController.text.trim();
+      await context.read<AlarmCubit>().saveAlarm(
+        existingId: widget.initialAlarm?.id,
+        hour: _selectedTime.hour,
+        minute: _selectedTime.minute,
+        label: label.isEmpty ? 'Budilnik' : label,
+        soundPath: _selectedSound.path,
+        soundTitle: _selectedSound.title,
+        repeatDays: _repeatDays,
+        vibrate: _vibrate,
+        requireMathMission: _requireMath,
+        linkedSolarType: _modeIndex == 1 ? _selectedSolarEvent : null,
+        solarOffsetMinutes: _modeIndex == 1 ? _solarOffset : 0,
+        lat: solarState.lat,
+        lng: solarState.lng,
+        region: solarState.region,
+      );
+
+      if (mounted) Navigator.pop(context);
+    } catch (_) {
+      if (mounted) {
+        _showError('Uyg\'otgichni saqlash imkoni bo\'lmadi');
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _delete() async {
+    try {
+      await context.read<AlarmCubit>().deleteAlarm(widget.initialAlarm!.id);
+      if (mounted) Navigator.pop(context);
+    } catch (_) {
+      if (mounted) _showError('Uyg\'otgichni o\'chirish imkoni bo\'lmadi');
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -104,7 +142,7 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
           Padding(
             padding: EdgeInsets.only(right: 8.w),
             child: TextButton(
-              onPressed: _save,
+              onPressed: _isSaving ? null : _save,
               child: Text(
                 'Saqlash',
                 style: TextStyle(
@@ -175,14 +213,27 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
                   children: [
                     // Label field
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 12.h,
+                      ),
                       child: TextField(
                         controller: _labelController,
-                        style: TextStyle(color: colors.textPrimary, fontSize: 14.sp),
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontSize: 14.sp,
+                        ),
                         decoration: InputDecoration(
                           labelText: 'Budilnik nomi',
-                          labelStyle: TextStyle(color: colors.textMuted, fontSize: 13.sp),
-                          prefixIcon: Icon(Icons.edit_note_rounded, color: colors.primary, size: 22.r),
+                          labelStyle: TextStyle(
+                            color: colors.textMuted,
+                            fontSize: 13.sp,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.edit_note_rounded,
+                            color: colors.primary,
+                            size: 22.r,
+                          ),
                           border: InputBorder.none,
                           isDense: true,
                         ),
@@ -199,7 +250,11 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.volume_up_rounded, color: colors.primary, size: 20.r),
+                              Icon(
+                                Icons.volume_up_rounded,
+                                color: colors.primary,
+                                size: 20.r,
+                              ),
                               SizedBox(width: 8.w),
                               Text(
                                 'Ovoz (Baland signal)',
@@ -216,20 +271,31 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
                             spacing: 8.w,
                             runSpacing: 8.h,
                             children: AlarmSoundOption.all.map((sound) {
-                              final isSelected = _selectedSound.path == sound.path;
+                              final isSelected =
+                                  _selectedSound.path == sound.path;
                               return ChoiceChip(
-                                label: Text(sound.title, style: TextStyle(fontSize: 12.sp)),
+                                label: Text(
+                                  sound.title,
+                                  style: TextStyle(fontSize: 12.sp),
+                                ),
                                 selected: isSelected,
                                 selectedColor: colors.primary,
                                 backgroundColor: colors.background,
                                 side: BorderSide(
-                                  color: isSelected ? colors.primary : colors.cardBorder,
+                                  color: isSelected
+                                      ? colors.primary
+                                      : colors.cardBorder,
                                 ),
                                 labelStyle: TextStyle(
-                                  color: isSelected ? Colors.white : colors.textPrimary,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : colors.textPrimary,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
                                 ),
-                                onSelected: (_) => setState(() => _selectedSound = sound),
+                                onSelected: (_) =>
+                                    setState(() => _selectedSound = sound),
                               );
                             }).toList(),
                           ),
@@ -241,13 +307,20 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
 
                     // Repeat Days
                     Padding(
-                      padding: EdgeInsets.all(16.w),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 16.h,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.repeat_rounded, color: colors.primary, size: 20.r),
+                              Icon(
+                                Icons.repeat_rounded,
+                                color: colors.primary,
+                                size: 20.r,
+                              ),
                               SizedBox(width: 8.w),
                               Text(
                                 'Takrorlanish kunlari',
@@ -280,10 +353,17 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
 
                     // Solar Rays Mission Switch
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 8.h,
+                      ),
                       child: Row(
                         children: [
-                          Icon(Icons.wb_sunny_rounded, color: Colors.amber, size: 22.r),
+                          Icon(
+                            Icons.wb_sunny_rounded,
+                            color: Colors.amber,
+                            size: 22.r,
+                          ),
                           SizedBox(width: 12.w),
                           Expanded(
                             child: Column(
@@ -299,14 +379,19 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
                                 ),
                                 Text(
                                   'Uyg\'onish uchun ekrandagi quyoshga 5 marta teginiladi',
-                                  style: TextStyle(fontSize: 11.sp, color: colors.textMuted),
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    color: colors.textMuted,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
                           Switch.adaptive(
                             value: _requireMath,
-                            activeTrackColor: Colors.amber.withValues(alpha: 0.5),
+                            activeTrackColor: Colors.amber.withValues(
+                              alpha: 0.5,
+                            ),
                             activeThumbColor: Colors.amber,
                             onChanged: (v) => setState(() => _requireMath = v),
                           ),
@@ -318,20 +403,32 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
 
                     // Vibrate Switch
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 8.h,
+                      ),
                       child: Row(
                         children: [
-                          Icon(Icons.vibration_rounded, color: colors.primary, size: 22.r),
+                          Icon(
+                            Icons.vibration_rounded,
+                            color: colors.primary,
+                            size: 22.r,
+                          ),
                           SizedBox(width: 12.w),
                           Expanded(
                             child: Text(
                               'Tebranish (Vibratsiya)',
-                              style: TextStyle(fontSize: 13.sp, color: colors.textPrimary),
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: colors.textPrimary,
+                              ),
                             ),
                           ),
                           Switch.adaptive(
                             value: _vibrate,
-                            activeTrackColor: colors.primary.withValues(alpha: 0.5),
+                            activeTrackColor: colors.primary.withValues(
+                              alpha: 0.5,
+                            ),
                             activeThumbColor: colors.primary,
                             onChanged: (v) => setState(() => _vibrate = v),
                           ),
@@ -348,14 +445,19 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colors.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: colors.onPrimary,
                   minimumSize: Size.fromHeight(50.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14.r),
+                  ),
                 ),
-                onPressed: _save,
+                onPressed: _isSaving ? null : _save,
                 child: Text(
                   'Budilnikni Saqlash',
-                  style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
 
@@ -367,14 +469,16 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
                     foregroundColor: Colors.redAccent,
                     side: const BorderSide(color: Colors.redAccent),
                     minimumSize: Size.fromHeight(48.h),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
                   ),
                   icon: Icon(Icons.delete_outline_rounded, size: 20.r),
-                  label: Text('Budilnikni O\'chirish', style: TextStyle(fontSize: 14.sp)),
-                  onPressed: () {
-                    context.read<AlarmCubit>().deleteAlarm(widget.initialAlarm!.id);
-                    Navigator.pop(context);
-                  },
+                  label: Text(
+                    'Budilnikni O\'chirish',
+                    style: TextStyle(fontSize: 14.sp),
+                  ),
+                  onPressed: _delete,
                 ),
               ],
 
@@ -392,21 +496,27 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
     required VoidCallback onTap,
     required AppColors colors,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 10.h),
-        decoration: BoxDecoration(
-          color: isSelected ? colors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(10.r),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.bold,
-              color: isSelected ? Colors.white : colors.textPrimary,
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          constraints: BoxConstraints(minHeight: 48.h),
+          padding: EdgeInsets.symmetric(vertical: 10.h),
+          decoration: BoxDecoration(
+            color: isSelected ? colors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(10.r),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? colors.onPrimary : colors.textPrimary,
+              ),
             ),
           ),
         ),
@@ -468,7 +578,11 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
         children: [
           Text(
             'Qaysi vaqtga bog\'laysiz?',
-            style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: colors.textPrimary),
+            style: TextStyle(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
+              color: colors.textPrimary,
+            ),
           ),
           SizedBox(height: 10.h),
           Wrap(
@@ -487,7 +601,10 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Siljish (oldin / keyin):', style: TextStyle(fontSize: 12.sp, color: colors.textMuted)),
+              Text(
+                'Siljish (oldin / keyin):',
+                style: TextStyle(fontSize: 12.sp, color: colors.textMuted),
+              ),
               Text(
                 '${_solarOffset >= 0 ? "+$_solarOffset" : "$_solarOffset"} daqiqa',
                 style: TextStyle(
@@ -512,9 +629,13 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
               _solarOffset < 0
                   ? '${_solarNameUz(_selectedSolarEvent)}dan ${_solarOffset.abs()} daqiqa oldin chalinadi'
                   : (_solarOffset == 0
-                      ? '${_solarNameUz(_selectedSolarEvent)} vaqtida chalinadi'
-                      : '${_solarNameUz(_selectedSolarEvent)}dan $_solarOffset daqiqa keyin chalinadi'),
-              style: TextStyle(fontSize: 12.sp, color: colors.primary, fontWeight: FontWeight.w500),
+                        ? '${_solarNameUz(_selectedSolarEvent)} vaqtida chalinadi'
+                        : '${_solarNameUz(_selectedSolarEvent)}dan $_solarOffset daqiqa keyin chalinadi'),
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: colors.primary,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -530,7 +651,7 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
       selectedColor: colors.primary,
       backgroundColor: colors.background,
       labelStyle: TextStyle(
-        color: isSelected ? Colors.white : colors.textPrimary,
+        color: isSelected ? colors.onPrimary : colors.textPrimary,
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
       ),
       onSelected: (_) => setState(() => _selectedSolarEvent = type),
@@ -539,31 +660,38 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
 
   Widget _weekdayCircle(String label, int day, AppColors colors) {
     final isSelected = _repeatDays.contains(day);
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          if (isSelected) {
-            _repeatDays.remove(day);
-          } else {
-            _repeatDays.add(day);
-          }
-        });
-      },
-      child: Container(
-        width: 38.w,
-        height: 38.w,
-        decoration: BoxDecoration(
-          color: isSelected ? colors.primary : colors.background,
-          shape: BoxShape.circle,
-          border: Border.all(color: isSelected ? colors.primary : colors.cardBorder),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 11.sp,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? Colors.white : colors.textPrimary,
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: label,
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            if (isSelected) {
+              _repeatDays.remove(day);
+            } else {
+              _repeatDays.add(day);
+            }
+          });
+        },
+        child: Container(
+          width: 48.w,
+          height: 48.w,
+          decoration: BoxDecoration(
+            color: isSelected ? colors.primary : colors.background,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isSelected ? colors.primary : colors.cardBorder,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.sp,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? colors.onPrimary : colors.textPrimary,
+              ),
             ),
           ),
         ),

@@ -23,6 +23,7 @@ dependencies:
   freezed_annotation: ^2.4.4
   flutter_screenutil: ^5.9.3
   wakelock_plus: ^1.2.8
+  permission_handler: ^12.0.3
 
 dev_dependencies:
   flutter_test:

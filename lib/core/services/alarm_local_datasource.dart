@@ -29,7 +29,8 @@ class AlarmLocalDataSource {
         stopButton: 'To\'xtatish',
       ),
     );
-    await Alarm.set(alarmSettings: settings);
+    final scheduled = await Alarm.set(alarmSettings: settings);
+    if (!scheduled) throw StateError('Unable to schedule alarm');
   }
 
   Future<void> stopAlarm() async {

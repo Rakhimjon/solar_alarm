@@ -35,13 +35,16 @@ class SolarClockState {
     double? lat,
     double? lng,
     String? region,
+    bool clearActiveAlarmTime = false,
   }) {
     return SolarClockState(
       status: status ?? this.status,
       cycle: cycle ?? this.cycle,
       selectedEvent: selectedEvent ?? this.selectedEvent,
       offsetMinutes: offsetMinutes ?? this.offsetMinutes,
-      activeAlarmTime: activeAlarmTime ?? this.activeAlarmTime,
+      activeAlarmTime: clearActiveAlarmTime
+          ? null
+          : (activeAlarmTime ?? this.activeAlarmTime),
       message: message,
       lat: lat ?? this.lat,
       lng: lng ?? this.lng,
@@ -49,4 +52,3 @@ class SolarClockState {
     );
   }
 }
-

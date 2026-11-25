@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/theme_cubit.dart';
 import '../../domain/entities/alarm_item.dart';
@@ -27,8 +28,8 @@ class AlarmView extends StatelessWidget {
           Navigator.of(context, rootNavigator: true).push(
             PageRouteBuilder(
               opaque: true,
-              pageBuilder: (_, __, ___) => RingingPage(onSwitchTab: onSwitchTab),
-              transitionsBuilder: (_, anim, __, child) =>
+              pageBuilder: (_, _, _) => RingingPage(onSwitchTab: onSwitchTab),
+              transitionsBuilder: (_, anim, _, child) =>
                   FadeTransition(opacity: anim, child: child),
               transitionDuration: const Duration(milliseconds: 400),
             ),
@@ -54,7 +55,9 @@ class AlarmView extends StatelessWidget {
             actions: [
               IconButton(
                 icon: Icon(
-                  context.isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                  context.isDark
+                      ? Icons.light_mode_rounded
+                      : Icons.dark_mode_rounded,
                   color: colors.primary,
                   size: 22.r,
                 ),
@@ -62,7 +65,11 @@ class AlarmView extends StatelessWidget {
                 onPressed: () => context.read<ThemeCubit>().toggleTheme(),
               ),
               IconButton(
-                icon: Icon(Icons.add_rounded, size: 24.r, color: colors.primary),
+                icon: Icon(
+                  Icons.add_rounded,
+                  size: 24.r,
+                  color: colors.primary,
+                ),
                 tooltip: 'Yangi uyg\'otgich',
                 onPressed: () => _openAddEdit(context),
               ),
@@ -75,7 +82,11 @@ class AlarmView extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.access_alarms_rounded, size: 54.r, color: colors.textMuted),
+                        Icon(
+                          Icons.access_alarms_rounded,
+                          size: 54.r,
+                          color: colors.textMuted,
+                        ),
                         SizedBox(height: 12.h),
                         Text(
                           'Hozircha uyg\'otgichlar o\'rnatilmagan',
@@ -89,14 +100,20 @@ class AlarmView extends StatelessWidget {
                         Text(
                           'Quyosh/Namoz vaqtiga bog\'langan yoki yangi uyg\'otgich qo\'shing',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: colors.textMuted, fontSize: 13.sp),
+                          style: TextStyle(
+                            color: colors.textMuted,
+                            fontSize: 13.sp,
+                          ),
                         ),
                         SizedBox(height: 16.h),
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: colors.primary,
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                            foregroundColor: colors.onPrimary,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 20.w,
+                              vertical: 12.h,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12.r),
                             ),
@@ -105,7 +122,10 @@ class AlarmView extends StatelessWidget {
                           icon: Icon(Icons.add_alarm_rounded, size: 20.r),
                           label: Text(
                             'Uyg\'otgich Qo\'shish',
-                            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -124,12 +144,15 @@ class AlarmView extends StatelessWidget {
               ? null
               : FloatingActionButton.extended(
                   backgroundColor: colors.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: colors.onPrimary,
                   onPressed: () => _openAddEdit(context),
                   icon: Icon(Icons.alarm_add_rounded, size: 20.r),
                   label: Text(
                     'Yangi Uyg\'otgich',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.sp,
+                    ),
                   ),
                 ),
         );
@@ -140,13 +163,15 @@ class AlarmView extends StatelessWidget {
   void _openAddEdit(BuildContext context, [AlarmItem? alarm]) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => AddEditAlarmPage(initialAlarm: alarm),
-      ),
+      MaterialPageRoute(builder: (_) => AddEditAlarmPage(initialAlarm: alarm)),
     );
   }
 
-  Widget _buildAlarmCard(BuildContext context, AlarmItem alarm, AlarmCubit cubit) {
+  Widget _buildAlarmCard(
+    BuildContext context,
+    AlarmItem alarm,
+    AlarmCubit cubit,
+  ) {
     final colors = context.appColors;
 
     return InkWell(
@@ -176,13 +201,18 @@ class AlarmView extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 28.sp,
                           fontWeight: FontWeight.bold,
-                          color: alarm.isEnabled ? colors.textPrimary : colors.textMuted,
+                          color: alarm.isEnabled
+                              ? colors.textPrimary
+                              : colors.textMuted,
                         ),
                       ),
                       SizedBox(width: 8.w),
                       Flexible(
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 3.h,
+                          ),
                           decoration: BoxDecoration(
                             color: colors.primary.withValues(
                               alpha: context.isDark ? 0.15 : 0.08,
@@ -217,7 +247,11 @@ class AlarmView extends StatelessWidget {
                       if (alarm.requireMathMission)
                         _miniBadge('☀️ Quyosh nurlari', Colors.amber, colors),
                       _miniBadge(alarm.soundTitle, colors.textMuted, colors),
-                      _miniBadge(alarm.repeatDaysText, colors.textMuted, colors),
+                      _miniBadge(
+                        alarm.repeatDaysText,
+                        colors.textMuted,
+                        colors,
+                      ),
                     ],
                   ),
                 ],

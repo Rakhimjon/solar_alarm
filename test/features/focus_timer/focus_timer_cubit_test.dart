@@ -116,4 +116,16 @@ void main() {
 
     expect(timerCubit.state.status, FocusStatus.running);
   });
+
+  test('Clears attached task and planner selection', () async {
+    timerCubit.attachTask('task-1', 'Task 1');
+    plannerCubit.setActiveTask('task-1');
+
+    timerCubit.attachTask(null, null);
+    plannerCubit.setActiveTask(null);
+
+    expect(timerCubit.state.activeTaskId, isNull);
+    expect(timerCubit.state.activeTaskTitle, isNull);
+    expect(plannerCubit.state.activeTaskId, isNull);
+  });
 }

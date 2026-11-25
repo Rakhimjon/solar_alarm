@@ -4,6 +4,7 @@ class PlanTask {
   final int targetMinutes;
   final int completedMinutes;
   final bool isCompleted;
+  final bool useTimer;
   final DateTime createdAt;
   final String? category;
 
@@ -13,6 +14,7 @@ class PlanTask {
     this.targetMinutes = 25,
     this.completedMinutes = 0,
     this.isCompleted = false,
+    this.useTimer = true,
     required this.createdAt,
     this.category,
   });
@@ -23,6 +25,7 @@ class PlanTask {
     int? targetMinutes,
     int? completedMinutes,
     bool? isCompleted,
+    bool? useTimer,
     DateTime? createdAt,
     String? category,
   }) {
@@ -32,6 +35,7 @@ class PlanTask {
       targetMinutes: targetMinutes ?? this.targetMinutes,
       completedMinutes: completedMinutes ?? this.completedMinutes,
       isCompleted: isCompleted ?? this.isCompleted,
+      useTimer: useTimer ?? this.useTimer,
       createdAt: createdAt ?? this.createdAt,
       category: category ?? this.category,
     );

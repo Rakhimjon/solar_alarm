@@ -5,10 +5,16 @@ class AlarmSoundOption {
   const AlarmSoundOption({required this.path, required this.title});
 
   static const List<AlarmSoundOption> all = [
-    AlarmSoundOption(path: 'assets/loud_beep.wav', title: 'Baland Raqamli (2.8 kHz)'),
+    AlarmSoundOption(
+      path: 'assets/loud_beep.wav',
+      title: 'Baland Raqamli (2.8 kHz)',
+    ),
     AlarmSoundOption(path: 'assets/siren_alarm.wav', title: 'Harbiy Sirena'),
     AlarmSoundOption(path: 'assets/alarm.wav', title: 'Klassik Budilnik'),
-    AlarmSoundOption(path: 'assets/gentle_chime.wav', title: 'Yumshoq Qo\'ng\'iroq'),
+    AlarmSoundOption(
+      path: 'assets/gentle_chime.wav',
+      title: 'Yumshoq Qo\'ng\'iroq',
+    ),
   ];
 }
 
@@ -23,8 +29,12 @@ class AlarmItem {
   final List<int> repeatDays; // 1 = Dush ... 7 = Yaksh
   final bool vibrate;
   final bool requireMathMission;
-  final String? linkedSolarType; // 'fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'
+  final String?
+  linkedSolarType; // 'fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'
   final int solarOffsetMinutes;
+  final double lat;
+  final double lng;
+  final String region;
 
   const AlarmItem({
     required this.id,
@@ -39,6 +49,9 @@ class AlarmItem {
     this.requireMathMission = false,
     this.linkedSolarType,
     this.solarOffsetMinutes = 0,
+    this.lat = 41.311081,
+    this.lng = 69.240562,
+    this.region = 'Toshkent',
   });
 
   bool get hasSolarLink => linkedSolarType != null;
@@ -72,8 +85,9 @@ class AlarmItem {
     return repeatDays.map((d) => dayNames[d] ?? '').join(', ');
   }
 
-  DateTime get nextDateTime {
-    final now = DateTime.now();
+  DateTime get nextDateTime => nextOccurrenceAfter(DateTime.now());
+
+  DateTime nextOccurrenceAfter(DateTime now) {
     var scheduled = DateTime(now.year, now.month, now.day, hour, minute);
 
     if (repeatDays.isEmpty) {
@@ -109,6 +123,9 @@ class AlarmItem {
     bool? requireMathMission,
     String? linkedSolarType,
     int? solarOffsetMinutes,
+    double? lat,
+    double? lng,
+    String? region,
   }) {
     return AlarmItem(
       id: id ?? this.id,
@@ -123,6 +140,9 @@ class AlarmItem {
       requireMathMission: requireMathMission ?? this.requireMathMission,
       linkedSolarType: linkedSolarType ?? this.linkedSolarType,
       solarOffsetMinutes: solarOffsetMinutes ?? this.solarOffsetMinutes,
+      lat: lat ?? this.lat,
+      lng: lng ?? this.lng,
+      region: region ?? this.region,
     );
   }
 
@@ -140,6 +160,9 @@ class AlarmItem {
       'requireMathMission': requireMathMission,
       'linkedSolarType': linkedSolarType,
       'solarOffsetMinutes': solarOffsetMinutes,
+      'lat': lat,
+      'lng': lng,
+      'region': region,
     };
   }
 
@@ -152,11 +175,18 @@ class AlarmItem {
       isEnabled: json['isEnabled'] as bool? ?? true,
       soundPath: json['soundPath'] as String? ?? 'assets/loud_beep.wav',
       soundTitle: json['soundTitle'] as String? ?? 'Baland Raqamli (2.8 kHz)',
-      repeatDays: (json['repeatDays'] as List<dynamic>?)?.map((e) => e as int).toList() ?? const [],
+      repeatDays:
+          (json['repeatDays'] as List<dynamic>?)
+              ?.map((e) => e as int)
+              .toList() ??
+          const [],
       vibrate: json['vibrate'] as bool? ?? true,
       requireMathMission: json['requireMathMission'] as bool? ?? false,
       linkedSolarType: json['linkedSolarType'] as String?,
       solarOffsetMinutes: json['solarOffsetMinutes'] as int? ?? 0,
+      lat: (json['lat'] as num?)?.toDouble() ?? 41.311081,
+      lng: (json['lng'] as num?)?.toDouble() ?? 69.240562,
+      region: json['region'] as String? ?? 'Toshkent',
     );
   }
 }

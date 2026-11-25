@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/theme_cubit.dart';
 import '../../data/datasources/prayer_times_remote_datasource.dart';
@@ -33,7 +34,9 @@ class SolarClockView extends StatelessWidget {
       builder: (context, state) {
         final cycle = state.cycle;
         if (cycle == null) {
-          return Center(child: CircularProgressIndicator(color: colors.primary));
+          return Center(
+            child: CircularProgressIndicator(color: colors.primary),
+          );
         }
 
         final next = cycle.nextEvent;
@@ -52,7 +55,11 @@ class SolarClockView extends StatelessWidget {
                     icon: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.location_on_rounded, color: colors.primary, size: 18),
+                        Icon(
+                          Icons.location_on_rounded,
+                          color: colors.primary,
+                          size: 18,
+                        ),
                         const SizedBox(width: 2),
                         Text(
                           state.region,
@@ -62,7 +69,11 @@ class SolarClockView extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        Icon(Icons.arrow_drop_down, color: colors.primary, size: 18),
+                        Icon(
+                          Icons.arrow_drop_down,
+                          color: colors.primary,
+                          size: 18,
+                        ),
                       ],
                     ),
                     onSelected: (region) =>
@@ -75,7 +86,9 @@ class SolarClockView extends StatelessWidget {
               ),
               IconButton(
                 icon: Icon(
-                  context.isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                  context.isDark
+                      ? Icons.light_mode_rounded
+                      : Icons.dark_mode_rounded,
                   color: colors.primary,
                 ),
                 tooltip: context.isDark ? 'Yorug\' rejim' : 'Qorong\'u rejim',
@@ -89,7 +102,10 @@ class SolarClockView extends StatelessWidget {
             ],
           ),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -121,10 +137,7 @@ class SolarClockView extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         if (next != null) ...[
-                          Text(
-                            next.icon,
-                            style: const TextStyle(fontSize: 40),
-                          ),
+                          Text(next.icon, style: const TextStyle(fontSize: 40)),
                           const SizedBox(height: 8),
                           Text(
                             'Keyingi vaqt: ${next.title}',
@@ -151,7 +164,9 @@ class SolarClockView extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: colors.primary.withValues(alpha: context.isDark ? 0.15 : 0.1),
+                                color: colors.primary.withValues(
+                                  alpha: context.isDark ? 0.15 : 0.1,
+                                ),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
@@ -233,10 +248,15 @@ class SolarClockView extends StatelessWidget {
                   final isNext = next?.type == item.type;
                   return Container(
                     margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: isNext
-                          ? colors.primary.withValues(alpha: context.isDark ? 0.12 : 0.08)
+                          ? colors.primary.withValues(
+                              alpha: context.isDark ? 0.12 : 0.08,
+                            )
                           : colors.card,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
@@ -256,7 +276,9 @@ class SolarClockView extends StatelessWidget {
                                 item.title,
                                 style: TextStyle(
                                   fontSize: 15,
-                                  fontWeight: isNext ? FontWeight.bold : FontWeight.w500,
+                                  fontWeight: isNext
+                                      ? FontWeight.bold
+                                      : FontWeight.w500,
                                   color: colors.textPrimary,
                                 ),
                               ),
@@ -354,7 +376,7 @@ class SolarClockView extends StatelessWidget {
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: sheetColors.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: colors.onPrimary,
                       minimumSize: const Size.fromHeight(48),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -364,7 +386,10 @@ class SolarClockView extends StatelessWidget {
                       cubit.scheduleAlarm();
                       Navigator.pop(sheetContext);
                     },
-                    child: const Text('Budilnikni Yoqish', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Budilnikni Yoqish',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextButton(
@@ -372,7 +397,10 @@ class SolarClockView extends StatelessWidget {
                       cubit.cancelAlarm();
                       Navigator.pop(sheetContext);
                     },
-                    child: const Text('Budilnikni O\'chirish', style: TextStyle(color: Colors.redAccent)),
+                    child: const Text(
+                      'Budilnikni O\'chirish',
+                      style: TextStyle(color: Colors.redAccent),
+                    ),
                   ),
                 ],
               ),

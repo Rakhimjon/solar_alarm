@@ -1,9 +1,11 @@
 import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:solar_alarm/core/services/kiosk_service.dart';
 import 'package:solar_alarm/features/planner/presentation/cubit/planner_cubit.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+
 import 'focus_timer_state.dart';
 
 class FocusTimerCubit extends Cubit<FocusTimerState> {
@@ -12,10 +14,8 @@ class FocusTimerCubit extends Cubit<FocusTimerState> {
   Timer? _ticker;
   DateTime? _targetEndTime;
 
-  FocusTimerCubit({
-    required this.plannerCubit,
-    required this.kioskService,
-  }) : super(const FocusTimerState());
+  FocusTimerCubit({required this.plannerCubit, required this.kioskService})
+    : super(const FocusTimerState());
 
   Future<void> _setWakelock(bool enable) async {
     try {
@@ -41,19 +41,24 @@ class FocusTimerCubit extends Cubit<FocusTimerState> {
     if (state.status == FocusStatus.running) return;
     final sec = minutes * 60;
     _targetEndTime = null;
-    emit(state.copyWith(
-      status: FocusStatus.idle,
-      totalSeconds: sec,
-      remainingSeconds: sec,
-      clearWarning: true,
-    ));
+    emit(
+      state.copyWith(
+        status: FocusStatus.idle,
+        totalSeconds: sec,
+        remainingSeconds: sec,
+        clearWarning: true,
+      ),
+    );
   }
 
   void attachTask(String? taskId, String? taskTitle) {
-    emit(state.copyWith(
-      activeTaskId: taskId,
-      activeTaskTitle: taskTitle,
-    ));
+    emit(
+      state.copyWith(
+        activeTaskId: taskId,
+        activeTaskTitle: taskTitle,
+        clearActiveTask: taskId == null,
+      ),
+    );
   }
 
   void start() async {
@@ -66,13 +71,17 @@ class FocusTimerCubit extends Cubit<FocusTimerState> {
 
     if (isClosed) return;
 
-    _targetEndTime = DateTime.now().add(Duration(seconds: state.remainingSeconds));
+    _targetEndTime = DateTime.now().add(
+      Duration(seconds: state.remainingSeconds),
+    );
 
-    emit(state.copyWith(
-      status: FocusStatus.running,
-      isLocked: locked,
-      clearWarning: true,
-    ));
+    emit(
+      state.copyWith(
+        status: FocusStatus.running,
+        isLocked: locked,
+        clearWarning: true,
+      ),
+    );
 
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
@@ -87,10 +96,7 @@ class FocusTimerCubit extends Cubit<FocusTimerState> {
     }
     if (isClosed) return;
     unawaited(_setWakelock(false));
-    emit(state.copyWith(
-      status: FocusStatus.paused,
-      isLocked: false,
-    ));
+    emit(state.copyWith(status: FocusStatus.paused, isLocked: false));
   }
 
   void reset() async {
@@ -101,12 +107,14 @@ class FocusTimerCubit extends Cubit<FocusTimerState> {
     }
     if (isClosed) return;
     unawaited(_setWakelock(false));
-    emit(state.copyWith(
-      status: FocusStatus.idle,
-      remainingSeconds: state.totalSeconds,
-      isLocked: false,
-      clearWarning: true,
-    ));
+    emit(
+      state.copyWith(
+        status: FocusStatus.idle,
+        remainingSeconds: state.totalSeconds,
+        isLocked: false,
+        clearWarning: true,
+      ),
+    );
   }
 
   void handleAppLifecycleBackground() {
@@ -114,7 +122,8 @@ class FocusTimerCubit extends Cubit<FocusTimerState> {
   }
 
   void handleAppLifecycleState(AppLifecycleState lifecycle) async {
-    if (lifecycle == AppLifecycleState.paused || lifecycle == AppLifecycleState.hidden) {
+    if (lifecycle == AppLifecycleState.paused ||
+        lifecycle == AppLifecycleState.hidden) {
       if (state.status == FocusStatus.running) {
         if (state.isDeepWorkEnabled) {
           _ticker?.cancel();
@@ -124,11 +133,13 @@ class FocusTimerCubit extends Cubit<FocusTimerState> {
           }
           if (isClosed) return;
           unawaited(_setWakelock(false));
-          emit(state.copyWith(
-            status: FocusStatus.paused,
-            isLocked: false,
-            warningMessage: '⚠️ Ilovadan chiqildi! Fokus to\'xtatildi.',
-          ));
+          emit(
+            state.copyWith(
+              status: FocusStatus.paused,
+              isLocked: false,
+              warningMessage: '⚠️ Ilovadan chiqildi! Fokus to\'xtatildi.',
+            ),
+          );
         } else {
           // Normal mode: keep running across background; temporarily disable wakelock
           unawaited(_setWakelock(false));
@@ -138,14 +149,19 @@ class FocusTimerCubit extends Cubit<FocusTimerState> {
       if (state.status == FocusStatus.running) {
         unawaited(_setWakelock(true));
         if (_targetEndTime != null) {
-          final remaining = _targetEndTime!.difference(DateTime.now()).inSeconds;
+          final remaining = _targetEndTime!
+              .difference(DateTime.now())
+              .inSeconds;
           if (remaining <= 0) {
             _finishSession();
           } else {
             if (isClosed) return;
             emit(state.copyWith(remainingSeconds: remaining));
             _ticker?.cancel();
-            _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+            _ticker = Timer.periodic(
+              const Duration(seconds: 1),
+              (_) => _tick(),
+            );
           }
         }
       }
@@ -161,14 +177,28 @@ class FocusTimerCubit extends Cubit<FocusTimerState> {
     unawaited(_setWakelock(false));
     final finishedMinutes = state.totalSeconds ~/ 60;
     if (state.activeTaskId != null) {
-      plannerCubit.recordFocusMinutes(state.activeTaskId!, finishedMinutes);
+      try {
+        await plannerCubit.recordFocusMinutes(
+          state.activeTaskId!,
+          finishedMinutes,
+        );
+      } catch (_) {
+        if (isClosed) return;
+        emit(
+          state.copyWith(
+            warningMessage: 'Fokus tugadi, lekin reja saqlanmadi.',
+          ),
+        );
+      }
     }
     if (isClosed) return;
-    emit(state.copyWith(
-      status: FocusStatus.completed,
-      remainingSeconds: 0,
-      isLocked: false,
-    ));
+    emit(
+      state.copyWith(
+        status: FocusStatus.completed,
+        remainingSeconds: 0,
+        isLocked: false,
+      ),
+    );
   }
 
   void _tick() {

@@ -1,5 +1,8 @@
 import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:solar_alarm/core/services/alarm_permissions.dart';
+
 import '../../domain/entities/solar_time_item.dart';
 import '../../domain/repositories/solar_clock_repository.dart';
 import 'solar_clock_state.dart';
@@ -26,10 +29,7 @@ class SolarClockCubit extends Cubit<SolarClockState> {
       lng: state.lng,
       region: state.region,
     );
-    emit(state.copyWith(
-      status: SolarClockStatus.loaded,
-      cycle: cycle,
-    ));
+    emit(state.copyWith(status: SolarClockStatus.loaded, cycle: cycle));
   }
 
   void selectEvent(SolarEventType event) {
@@ -49,29 +49,49 @@ class SolarClockCubit extends Cubit<SolarClockState> {
     final cycle = state.cycle;
     if (cycle == null) return;
 
-    final targetItem = cycle.items.firstWhere(
-      (item) => item.type == state.selectedEvent,
-      orElse: () => cycle.items.first,
-    );
+    try {
+      final permissionsGranted = await AlarmPermissions.ensure();
+      if (isClosed) return;
+      if (!permissionsGranted) {
+        emit(
+          state.copyWith(
+            message: 'Bildirishnoma va aniq uyg\'otgich ruxsatlarini bering',
+          ),
+        );
+        return;
+      }
 
-    final scheduled = await repository.scheduleAlarm(
-      eventType: targetItem.type,
-      eventTime: targetItem.time,
-      offsetMinutes: state.offsetMinutes,
-    );
+      final targetItem = cycle.items.firstWhere(
+        (item) => item.type == state.selectedEvent,
+        orElse: () => cycle.items.first,
+      );
+      final scheduled = await repository.scheduleAlarm(
+        eventType: targetItem.type,
+        eventTime: targetItem.time,
+        offsetMinutes: state.offsetMinutes,
+      );
 
-    emit(state.copyWith(
-      activeAlarmTime: scheduled,
-      message: 'Budilnik muvaffaqiyatli saqlandi',
-    ));
+      if (isClosed) return;
+      emit(
+        state.copyWith(
+          activeAlarmTime: scheduled,
+          message: 'Budilnik muvaffaqiyatli saqlandi',
+        ),
+      );
+    } catch (_) {
+      if (isClosed) return;
+      emit(state.copyWith(message: 'Budilnikni saqlash imkoni bo\'lmadi'));
+    }
   }
 
   Future<void> cancelAlarm() async {
     await repository.cancelAlarm();
-    emit(state.copyWith(
-      activeAlarmTime: null,
-      message: 'Budilnik o\'chirildi',
-    ));
+    emit(
+      state.copyWith(
+        clearActiveAlarmTime: true,
+        message: 'Budilnik o\'chirildi',
+      ),
+    );
   }
 
   @override
