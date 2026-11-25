@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../cubit/alarm_cubit.dart';
 import '../cubit/alarm_state.dart';
 
@@ -287,7 +286,7 @@ class _SunMission extends StatelessWidget {
               height: tapped ? 12.r : 8.r,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: tapped ? Colors.amber : Colors.white20,
+                color: tapped ? Colors.amber : Colors.white12,
               ),
             );
           }),

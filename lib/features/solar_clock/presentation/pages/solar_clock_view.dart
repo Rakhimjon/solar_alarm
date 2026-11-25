@@ -110,7 +110,7 @@ class SolarClockView extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '📍 Toshkent',
+                              '📍 ${state.region}',
                               style: TextStyle(
                                 color: colors.primary,
                                 fontSize: 13,
