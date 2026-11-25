@@ -1,20 +1,23 @@
-.PHONY: all get clean clean_all runner watch format analyze test e2e maestro-install apk bundle ios icon help
+.PHONY: all get clean clean_all runner watch format analyze test e2e patrol patrol-release maestro-install apk bundle ios icon help
 
 help:
 	@echo "Available commands:"
-	@echo "  make get        - Run flutter pub get"
-	@echo "  make clean      - Clean build cache"
-	@echo "  make clean_all  - Full clean and rebuild"
-	@echo "  make runner     - Generate code (bloc, freezed, json)"
-	@echo "  make watch      - Watch & auto-generate code"
-	@echo "  make icon       - Generate Android & iOS launcher icons"
-	@echo "  make format     - Format all dart files"
-	@echo "  make analyze    - Run flutter analyze"
-	@echo "  make test       - Run unit tests"
-	@echo "  make e2e        - Run Maestro E2E test suite"
-	@echo "  make run        - Run flutter app"
-	@echo "  make apk        - Build release APK"
-	@echo "  make bundle     - Build release AppBundle"
+	@echo "  make get            - Run flutter pub get"
+	@echo "  make clean          - Clean build cache"
+	@echo "  make clean_all      - Full clean and rebuild"
+	@echo "  make runner         - Generate code (bloc, freezed, json)"
+	@echo "  make watch          - Watch & auto-generate code"
+	@echo "  make icon           - Generate Android & iOS launcher icons"
+	@echo "  make format         - Format all dart files"
+	@echo "  make analyze        - Run flutter analyze"
+	@echo "  make test           - Run unit tests"
+	@echo "  make patrol         - Run Patrol E2E test suite"
+	@echo "  make patrol-release - Run Patrol E2E test in release mode"
+	@echo "  make e2e            - Run Maestro E2E test suite"
+	@echo "  make run            - Run flutter app"
+	@echo "  make apk            - Build release APK"
+	@echo "  make bundle         - Build release AppBundle"
+	@echo "  make ios            - Build release iOS"
 
 icon:
 	dart run flutter_launcher_icons
@@ -51,6 +54,12 @@ maestro-install:
 
 e2e:
 	maestro test .maestro/suite.yaml
+
+patrol:
+	~/.pub-cache/bin/patrol test -t integration_test/app_e2e_test.dart
+
+patrol-release:
+	~/.pub-cache/bin/patrol test -t integration_test/app_e2e_test.dart --release
 
 run:
 	flutter run

@@ -13,7 +13,6 @@ A new Flutter project.
 - Adopt 'Uyg'otgich' as pure Uzbek name for alarm, replace frustrating math addition mission with interactive Solar Rays Wake-up mission (5 gentle sun taps with morning affirmation)
 
 ## Notes
-- feat: initialize solar alarm flutter application
 - feat: add bloc state management for solar alarm
 - refactor: migrate project structure to DDD clean architecture with feature modules
 - feat: add solar clock, focus timer, and planner features with navigation
@@ -23,6 +22,7 @@ A new Flutter project.
 - feat: implement alarm feature with storage, repository, cubit, and UI views
 - feat: add Maestro E2E test suite and math challenge mission to alarms
 - feat: add task categories and filtering to planner view
+- New feature: feat: migrate focus timer and navigation to iOS Cupertino design and add wakelock support [lib/core/theme/app_theme.dart]
 
 ## Key files
 - `.gitignore`

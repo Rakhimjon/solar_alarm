@@ -1,5 +1,6 @@
 name: solar_alarm
 description: "A new Flutter project."
+version: 1.0.0+1
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -31,6 +32,15 @@ dev_dependencies:
   build_runner: ^2.4.13
   freezed: ^2.5.7
   flutter_launcher_icons: ^0.14.3
+  patrol: ^4.11.0
+
+patrol:
+  app_name: Solar Alarm
+  test_directory: integration_test
+  android:
+    package_name: com.example.solar_alarm
+  ios:
+    bundle_id: com.example.solarAlarm
 
 flutter_launcher_icons:
   android: "launcher_icon"
