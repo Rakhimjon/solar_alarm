@@ -10,6 +10,14 @@ class AlarmCubit extends Cubit<AlarmState> {
   final AlarmRepository repository;
   StreamSubscription? _ringSubscription;
 
+  static const List<String> _affirmations = [
+    'Xayrli tong! Bugun yangi imkoniyatlar va baraka kuni.',
+    'Har bir yangi kun — yangi muvaffaqiyatlar boshlanishi.',
+    'Salomatlik, xotirjamlik va unumli mehnat bilan boshlang.',
+    'Bugungi kun orzularingiz sari intilish uchun ajoyib fursat.',
+    'Bismillah, yangi kunni yuksak maqsadlar bilan boshlaymiz.',
+  ];
+
   AlarmCubit({required this.repository}) : super(const AlarmState()) {
     loadAlarms();
     _initRingListener();
@@ -24,6 +32,7 @@ class AlarmCubit extends Cubit<AlarmState> {
         final rand = Random();
         final op1 = 15 + rand.nextInt(35);
         final op2 = 12 + rand.nextInt(40);
+        final affirmation = _affirmations[rand.nextInt(_affirmations.length)];
 
         emit(state.copyWith(
           ringingAlarmId: ringingAlarm.id,
@@ -31,6 +40,8 @@ class AlarmCubit extends Cubit<AlarmState> {
           ringingRequireMath: match?.requireMathMission ?? false,
           mathOperand1: op1,
           mathOperand2: op2,
+          remainingSunTaps: 5,
+          morningAffirmation: affirmation,
         ));
       } else if (state.isRinging) {
         emit(state.copyWith(clearRinging: true));
@@ -63,7 +74,7 @@ class AlarmCubit extends Cubit<AlarmState> {
       id: id,
       hour: hour,
       minute: minute,
-      label: label.isEmpty ? 'Budilnik' : label,
+      label: label.isEmpty ? 'Uyg\'otgich' : label,
       soundPath: soundPath,
       soundTitle: soundTitle,
       repeatDays: repeatDays,
@@ -76,7 +87,7 @@ class AlarmCubit extends Cubit<AlarmState> {
 
     await repository.saveAlarm(alarm);
     await loadAlarms();
-    emit(state.copyWith(message: 'Budilnik saqlandi'));
+    emit(state.copyWith(message: 'Uyg\'otgich saqlandi'));
   }
 
   Future<void> toggleAlarm(int id) async {
@@ -87,7 +98,16 @@ class AlarmCubit extends Cubit<AlarmState> {
   Future<void> deleteAlarm(int id) async {
     await repository.deleteAlarm(id);
     await loadAlarms();
-    emit(state.copyWith(message: 'Budilnik o\'chirildi'));
+    emit(state.copyWith(message: 'Uyg\'otgich o\'chirildi'));
+  }
+
+  void tapSunRay() {
+    if (state.remainingSunTaps > 1) {
+      emit(state.copyWith(remainingSunTaps: state.remainingSunTaps - 1));
+    } else {
+      emit(state.copyWith(remainingSunTaps: 0));
+      dismissRinging();
+    }
   }
 
   bool verifyMathAndDismiss(int userAnswer) {
@@ -113,7 +133,7 @@ class AlarmCubit extends Cubit<AlarmState> {
     }
     emit(state.copyWith(
       clearRinging: true,
-      message: 'Budilnik $minutes daqiqaga kechiktirildi',
+      message: 'Uyg\'otgich $minutes daqiqaga kechiktirildi',
     ));
   }
 

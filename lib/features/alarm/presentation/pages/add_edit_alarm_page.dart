@@ -97,7 +97,7 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isEditing ? 'Budilnikni Tahrirlash' : 'Yangi Budilnik',
+          isEditing ? 'Uyg\'otgichni Tahrirlash' : 'Yangi Uyg\'otgich',
           style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -278,19 +278,19 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
 
                     Divider(height: 1, color: colors.cardBorder),
 
-                    // Math Mission Switch
+                    // Solar Rays Mission Switch
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                       child: Row(
                         children: [
-                          Icon(Icons.psychology_rounded, color: Colors.orangeAccent, size: 22.r),
+                          Icon(Icons.wb_sunny_rounded, color: Colors.amber, size: 22.r),
                           SizedBox(width: 12.w),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Aqliy missiya (Math Challenge)',
+                                  'Quyosh nurlari missiyasi',
                                   style: TextStyle(
                                     fontSize: 13.sp,
                                     fontWeight: FontWeight.w600,
@@ -298,7 +298,7 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
                                   ),
                                 ),
                                 Text(
-                                  'Signalni to\'xtatish uchun misol yechiladi',
+                                  'Uyg\'onish uchun ekrandagi quyoshga 5 marta teginiladi',
                                   style: TextStyle(fontSize: 11.sp, color: colors.textMuted),
                                 ),
                               ],
@@ -306,8 +306,8 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
                           ),
                           Switch.adaptive(
                             value: _requireMath,
-                            activeTrackColor: Colors.orangeAccent.withValues(alpha: 0.5),
-                            activeThumbColor: Colors.orangeAccent,
+                            activeTrackColor: Colors.amber.withValues(alpha: 0.5),
+                            activeThumbColor: Colors.amber,
                             onChanged: (v) => setState(() => _requireMath = v),
                           ),
                         ],

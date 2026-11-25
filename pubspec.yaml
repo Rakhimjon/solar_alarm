@@ -21,6 +21,7 @@ dependencies:
   shared_preferences: ^2.3.2
   freezed_annotation: ^2.4.4
   flutter_screenutil: ^5.9.3
+  wakelock_plus: ^1.2.8
 
 dev_dependencies:
   flutter_test:

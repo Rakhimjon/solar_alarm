@@ -41,7 +41,7 @@ class AlarmView extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text('Budilnik', style: TextStyle(fontSize: 18.sp)),
+            title: Text('Uyg\'otgich', style: TextStyle(fontSize: 18.sp)),
             actions: [
               IconButton(
                 icon: Icon(
@@ -54,7 +54,7 @@ class AlarmView extends StatelessWidget {
               ),
               IconButton(
                 icon: Icon(Icons.add_rounded, size: 24.r, color: colors.primary),
-                tooltip: 'Yangi budilnik',
+                tooltip: 'Yangi uyg\'otgich',
                 onPressed: () => _openAddEdit(context),
               ),
             ],
@@ -69,7 +69,7 @@ class AlarmView extends StatelessWidget {
                         Icon(Icons.access_alarms_rounded, size: 54.r, color: colors.textMuted),
                         SizedBox(height: 12.h),
                         Text(
-                          'Hozircha budilniklar o\'rnatilmagan',
+                          'Hozircha uyg\'otgichlar o\'rnatilmagan',
                           style: TextStyle(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.bold,
@@ -78,7 +78,7 @@ class AlarmView extends StatelessWidget {
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          'Quyosh/Namoz vaqtiga bog\'langan yoki baland ovozli yangi budilnik qo\'shing',
+                          'Quyosh/Namoz vaqtiga bog\'langan yoki yangi uyg\'otgich qo\'shing',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: colors.textMuted, fontSize: 13.sp),
                         ),
@@ -92,7 +92,7 @@ class AlarmView extends StatelessWidget {
                           ),
                           onPressed: () => _openAddEdit(context),
                           icon: Icon(Icons.add_alarm_rounded, size: 20.r),
-                          label: Text('Budilnik Qo\'shish', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold)),
+                          label: Text('Uyg\'otgich Qo\'shish', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
@@ -113,7 +113,7 @@ class AlarmView extends StatelessWidget {
                   foregroundColor: Colors.white,
                   onPressed: () => _openAddEdit(context),
                   icon: Icon(Icons.alarm_add_rounded, size: 20.r),
-                  label: Text('Yangi Budilnik', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp)),
+                  label: Text('Yangi Uyg\'otgich', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp)),
                 ),
         );
       },
@@ -193,7 +193,7 @@ class AlarmView extends StatelessWidget {
                           colors,
                         ),
                       if (alarm.requireMathMission)
-                        _miniBadge('🧠 Aqliy missiya', Colors.orangeAccent, colors),
+                        _miniBadge('☀️ Quyosh nurlari', Colors.amber, colors),
                       _miniBadge(alarm.soundTitle, colors.textMuted, colors),
                       _miniBadge(alarm.repeatDaysText, colors.textMuted, colors),
                     ],
@@ -247,26 +247,32 @@ class AlarmView extends StatelessWidget {
   }
 
   void _showRingingDialog(BuildContext context, AlarmState state) {
-    final mathController = TextEditingController();
-    String? errorMessage;
-
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
+        return BlocBuilder<AlarmCubit, AlarmState>(
+          builder: (context, currentState) {
+            final colors = context.appColors;
+            final remainingTaps = currentState.remainingSunTaps;
+            final hasMission = currentState.ringingRequireMath && remainingTaps > 0;
+
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+              backgroundColor: colors.card,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
               title: Center(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.alarm_on_rounded, color: Colors.amber, size: 28),
+                    Icon(Icons.wb_sunny_rounded, color: Colors.amber.shade600, size: 28.r),
                     SizedBox(width: 8.w),
                     Text(
-                      'Budilnik Jiringlamoqda!',
-                      style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+                      'Uyg\'otgich Jiringlamoqda!',
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
                     ),
                   ],
                 ),
@@ -276,48 +282,102 @@ class AlarmView extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      state.ringingAlarmLabel ?? 'Vaqt bo\'ldi!',
-                      style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
+                      currentState.ringingAlarmLabel ?? 'Vaqt bo\'ldi!',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textPrimary,
+                      ),
                     ),
-                    SizedBox(height: 14.h),
+                    SizedBox(height: 12.h),
 
-                    // If Math Mission is required
-                    if (state.ringingRequireMath) ...[
-                      Container(
-                        padding: EdgeInsets.all(12.w),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(color: Colors.amber),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              '🧠 Uyqudan uyg\'onish missiyasi:',
-                              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
-                            ),
-                            SizedBox(height: 8.h),
-                            Text(
-                              '${state.mathOperand1} + ${state.mathOperand2} = ?',
-                              style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.bold, letterSpacing: 2.0),
-                            ),
-                            SizedBox(height: 10.h),
-                            TextField(
-                              controller: mathController,
-                              keyboardType: TextInputType.number,
-                              autofocus: true,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
-                              decoration: InputDecoration(
-                                hintText: 'Javobni yozing',
-                                errorText: errorMessage,
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r)),
-                              ),
-                            ),
-                          ],
+                    // Morning Positive Affirmation Card
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(14.r),
+                        border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        '✨ ${currentState.morningAffirmation}',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12.5.sp,
+                          fontStyle: FontStyle.italic,
+                          color: colors.textPrimary,
+                          height: 1.3,
                         ),
                       ),
-                      SizedBox(height: 14.h),
+                    ),
+                    SizedBox(height: 16.h),
+
+                    // Creative Solar Rays Wake-Up Mission
+                    if (hasMission) ...[
+                      Column(
+                        children: [
+                          Text(
+                            '☀️ Quyosh Nurlari Missiyasi',
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.bold,
+                              color: colors.primary,
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            'Uyg\'onish uchun quyoshga $remainingTaps marta teging',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: colors.textMuted,
+                            ),
+                          ),
+                          SizedBox(height: 14.h),
+                          GestureDetector(
+                            onTap: () {
+                              context.read<AlarmCubit>().tapSunRay();
+                              if (remainingTaps <= 1) {
+                                Navigator.pop(dialogContext);
+                              }
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: 90.r,
+                              height: 90.r,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: const RadialGradient(
+                                  colors: [Color(0xFFFDE68A), Color(0xFFF59E0B), Color(0xFFD97706)],
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.amber.withValues(alpha: 0.5),
+                                    blurRadius: 18,
+                                    spreadRadius: 3,
+                                  ),
+                                ],
+                              ),
+                              alignment: Alignment.center,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.wb_sunny_rounded, color: Colors.white, size: 36.r),
+                                  Text(
+                                    '$remainingTaps',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 18.h),
                     ],
 
                     // Wake-up to Deep Work CTA Button
@@ -325,13 +385,17 @@ class AlarmView extends StatelessWidget {
                       width: double.infinity,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFD97706)]),
-                        borderRadius: BorderRadius.circular(12.r),
+                        borderRadius: BorderRadius.circular(14.r),
                       ),
                       child: TextButton.icon(
                         icon: const Icon(Icons.hourglass_top_rounded, color: Colors.white),
                         label: Text(
-                          '🚀 25 d Fokusni boshlash',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.sp),
+                          '🚀 25 d Fokus bilan boshlash',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13.5.sp,
+                          ),
                         ),
                         onPressed: () {
                           context.read<AlarmCubit>().dismissRinging();
@@ -349,28 +413,22 @@ class AlarmView extends StatelessWidget {
                     context.read<AlarmCubit>().snoozeRinging(minutes: 5);
                     Navigator.pop(dialogContext);
                   },
-                  child: const Text('5 daqiqa kuting (Snooze)'),
+                  child: Text(
+                    '5 daqiqa kuting (Snooze)',
+                    style: TextStyle(color: colors.textMuted, fontSize: 13.sp),
+                  ),
                 ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-                  onPressed: () {
-                    if (state.ringingRequireMath) {
-                      final input = int.tryParse(mathController.text.trim());
-                      final solved = context.read<AlarmCubit>().verifyMathAndDismiss(input ?? -1);
-                      if (solved) {
-                        Navigator.pop(dialogContext);
-                      } else {
-                        setDialogState(() {
-                          errorMessage = 'Noto\'g\'ri! Yana hisoblang';
-                        });
-                      }
-                    } else {
+                if (!hasMission)
+                  TextButton(
+                    onPressed: () {
                       context.read<AlarmCubit>().dismissRinging();
                       Navigator.pop(dialogContext);
-                    }
-                  },
-                  child: const Text('To\'xtatish', style: TextStyle(color: Colors.white)),
-                ),
+                    },
+                    child: const Text(
+                      'To\'xtatish',
+                      style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                    ),
+                  ),
               ],
             );
           },

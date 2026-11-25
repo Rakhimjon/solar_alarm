@@ -1,3 +1,5 @@
+import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:solar_alarm/features/alarm/presentation/pages/alarm_view.dart';
@@ -17,6 +19,8 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
+
     final pages = [
       const SolarClockView(),
       const FocusTimerView(),
@@ -25,44 +29,49 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
     ];
 
     return Scaffold(
+      backgroundColor: colors.background,
       body: IndexedStack(
         index: _currentIndex,
         children: pages,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(
-              color: context.appColors.cardBorder.withValues(alpha: 0.6),
-              width: 0.8,
+      bottomNavigationBar: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: CupertinoTabBar(
+            currentIndex: _currentIndex,
+            onTap: (index) => setState(() => _currentIndex = index),
+            backgroundColor: colors.background.withValues(alpha: context.isDark ? 0.78 : 0.88),
+            activeColor: colors.primary,
+            inactiveColor: colors.textMuted,
+            border: Border(
+              top: BorderSide(
+                color: colors.cardBorder.withValues(alpha: 0.5),
+                width: 0.5,
+              ),
             ),
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.sun_max),
+                activeIcon: Icon(CupertinoIcons.sun_max_fill),
+                label: 'Quyosh',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.hourglass),
+                activeIcon: Icon(CupertinoIcons.hourglass_bottomhalf_fill),
+                label: 'Qumsoat',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.square_list),
+                activeIcon: Icon(CupertinoIcons.square_list_fill),
+                label: 'Rejalar',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.alarm),
+                activeIcon: Icon(CupertinoIcons.alarm_fill),
+                label: 'Uyg\'otgich',
+              ),
+            ],
           ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.wb_sunny_outlined),
-              activeIcon: Icon(Icons.wb_sunny_rounded),
-              label: 'Quyosh Soati',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.hourglass_empty_rounded),
-              activeIcon: Icon(Icons.hourglass_full_rounded),
-              label: 'Qumsoat',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.checklist_rounded),
-              activeIcon: Icon(Icons.fact_check_rounded),
-              label: 'Rejalar',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.access_alarms_outlined),
-              activeIcon: Icon(Icons.access_alarms_rounded),
-              label: 'Budilnik',
-            ),
-          ],
         ),
       ),
     );

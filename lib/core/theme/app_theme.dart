@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 @immutable
@@ -141,6 +142,10 @@ class AppTheme {
           side: const BorderSide(color: cardBorder, width: 1),
         ),
       ),
+      cupertinoOverrideTheme: const CupertinoThemeData(
+        primaryColor: primaryAmber,
+        brightness: Brightness.dark,
+      ),
       extensions: const [AppColors.dark],
     );
   }
@@ -191,6 +196,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: lightBorder, width: 1),
         ),
+      ),
+      cupertinoOverrideTheme: const CupertinoThemeData(
+        primaryColor: lightPrimary,
+        brightness: Brightness.light,
       ),
       extensions: const [AppColors.light],
     );

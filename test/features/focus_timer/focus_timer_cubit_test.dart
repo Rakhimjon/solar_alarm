@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:solar_alarm/core/services/kiosk_service.dart';
 import 'package:solar_alarm/features/focus_timer/presentation/cubit/focus_timer_cubit.dart';
@@ -91,5 +92,28 @@ void main() {
     expect(timerCubit.state.isLocked, isFalse);
     expect(fakeKiosk.locked, isFalse);
     expect(timerCubit.state.warningMessage, isNotNull);
+  });
+
+  test('Keeps running in background when Deep Work is disabled', () async {
+    timerCubit.toggleDeepWork(false);
+    timerCubit.start();
+    await pumpEventQueue();
+
+    expect(timerCubit.state.status, FocusStatus.running);
+    expect(timerCubit.state.isDeepWorkEnabled, isFalse);
+
+    // App goes to background
+    timerCubit.handleAppLifecycleState(AppLifecycleState.paused);
+    await pumpEventQueue();
+
+    // In normal mode, state should remain running
+    expect(timerCubit.state.status, FocusStatus.running);
+    expect(timerCubit.state.warningMessage, isNull);
+
+    // App resumes
+    timerCubit.handleAppLifecycleState(AppLifecycleState.resumed);
+    await pumpEventQueue();
+
+    expect(timerCubit.state.status, FocusStatus.running);
   });
 }

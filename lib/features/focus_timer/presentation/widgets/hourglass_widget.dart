@@ -21,12 +21,13 @@ class HourglassWidget extends StatefulWidget {
 }
 
 class _HourglassWidgetState extends State<HourglassWidget>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final AnimationController _animController;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -49,7 +50,21 @@ class _HourglassWidgetState extends State<HourglassWidget>
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
+      if (_animController.isAnimating) {
+        _animController.stop();
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      if (widget.isRunning && widget.progress < 0.999 && !_animController.isAnimating) {
+        _animController.repeat();
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _animController.dispose();
     super.dispose();
   }
@@ -87,6 +102,48 @@ class _HourglassPainter extends CustomPainter {
   final double animValue;
   final bool isDark;
 
+  // Reusable Paint objects to eliminate GC pressure at 60/120fps
+  static final Paint _capPaint = Paint()..style = PaintingStyle.fill;
+  static final Paint _highlightPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.2;
+  static final Paint _innerBgPaint = Paint()..style = PaintingStyle.fill;
+  static final Paint _sandTopPaint = Paint()..style = PaintingStyle.fill;
+  static final Paint _sandBottomPaint = Paint()..style = PaintingStyle.fill;
+  static final Paint _rimPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.5;
+  static final Paint _ridgePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.5;
+  static final Paint _streamPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeWidth = 2.4;
+  static final Paint _grainPaint = Paint()..style = PaintingStyle.fill;
+  static final Paint _splashPaint = Paint()..style = PaintingStyle.fill;
+  static final Paint _glassOutlinePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 3.0
+    ..strokeCap = StrokeCap.round;
+  static final Paint _reflectPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2.0
+    ..strokeCap = StrokeCap.round;
+
+  // Reusable constant color arrays for gradients
+  static const List<Color> _topSandColors = [
+    Color(0xFFFFE082), // amber.shade200
+    Color(0xFFFFCA28), // amber.shade400
+    Color(0xFFFFB300), // amber.shade600
+  ];
+
+  static const List<Color> _bottomSandColors = [
+    Color(0xFFFFD54F), // amber.shade300
+    Color(0xFFFFCA28), // amber.shade500
+    Color(0xFFFFA000), // amber.shade700
+  ];
+
   _HourglassPainter({
     required this.progress,
     required this.isRunning,
@@ -113,11 +170,10 @@ class _HourglassPainter extends CustomPainter {
     canvas.clipPath(glassPath);
 
     // Subtle background tint inside chamber
-    final innerBgPaint = Paint()
-      ..color = isDark
-          ? Colors.white.withValues(alpha: 0.02)
-          : Colors.black.withValues(alpha: 0.02);
-    canvas.drawRect(Rect.fromLTWH(0, 0, w, h), innerBgPaint);
+    _innerBgPaint.color = isDark
+        ? const Color(0x05FFFFFF)
+        : const Color(0x05000000);
+    canvas.drawRect(Rect.fromLTWH(0, 0, w, h), _innerBgPaint);
 
     // Calculate bottom mound peak for stream collision
     final bottomMoundPeakY = _calculateBottomPeakY(h, cy, progress);
@@ -136,12 +192,8 @@ class _HourglassPainter extends CustomPainter {
     canvas.restore();
 
     // 4. Glass Outline Stroke
-    final glassOutlinePaint = Paint()
-      ..color = glassColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0
-      ..strokeCap = StrokeCap.round;
-    canvas.drawPath(glassPath, glassOutlinePaint);
+    _glassOutlinePaint.color = glassColor;
+    canvas.drawPath(glassPath, _glassOutlinePaint);
 
     // 5. Glass 3D Specular Reflection Highlights
     _drawGlassReflections(canvas, w, h, cx, cy);
@@ -169,30 +221,24 @@ class _HourglassPainter extends CustomPainter {
     final capColor = isDark ? const Color(0xFF263244) : const Color(0xFFCBD5E1);
     final capHighlight = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
 
-    final capPaint = Paint()
-      ..color = capColor
-      ..style = PaintingStyle.fill;
-
-    final highlightPaint = Paint()
-      ..color = capHighlight
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+    _capPaint.color = capColor;
+    _highlightPaint.color = capHighlight;
 
     // Top Stand Plate
     final topRRect = RRect.fromRectAndRadius(
       Rect.fromLTRB(w * 0.15, h * 0.065, w * 0.85, h * 0.10),
       const Radius.circular(5),
     );
-    canvas.drawRRect(topRRect, capPaint);
-    canvas.drawRRect(topRRect, highlightPaint);
+    canvas.drawRRect(topRRect, _capPaint);
+    canvas.drawRRect(topRRect, _highlightPaint);
 
     // Bottom Stand Plate
     final bottomRRect = RRect.fromRectAndRadius(
       Rect.fromLTRB(w * 0.15, h * 0.90, w * 0.85, h * 0.935),
       const Radius.circular(5),
     );
-    canvas.drawRRect(bottomRRect, capPaint);
-    canvas.drawRRect(bottomRRect, highlightPaint);
+    canvas.drawRRect(bottomRRect, _capPaint);
+    canvas.drawRRect(bottomRRect, _highlightPaint);
   }
 
   void _drawTopSand(
@@ -214,19 +260,11 @@ class _HourglassPainter extends CustomPainter {
         ? (14.0 * remaining).clamp(3.0, 12.0)
         : 4.0 * remaining;
 
-    final sandGradient = LinearGradient(
+    _sandTopPaint.shader = const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [
-        Colors.amber.shade200,
-        Colors.amber.shade400,
-        Colors.amber.shade600,
-      ],
+      colors: _topSandColors,
     ).createShader(Rect.fromLTRB(w * 0.15, sandTopY, w * 0.85, cy));
-
-    final sandPaint = Paint()
-      ..shader = sandGradient
-      ..style = PaintingStyle.fill;
 
     final path = Path();
     path.moveTo(w * 0.10, cy);
@@ -236,17 +274,14 @@ class _HourglassPainter extends CustomPainter {
     path.lineTo(w * 0.90, cy);
     path.close();
 
-    canvas.drawPath(path, sandPaint);
+    canvas.drawPath(path, _sandTopPaint);
 
-    // Subtle dark gradient line inside funnel to show depth
-    final rimPaint = Paint()
-      ..color = Colors.amber.shade800.withValues(alpha: 0.35)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+    // Subtle dark line inside funnel to show depth
+    _rimPaint.color = const Color(0x59FF8F00); // amber.shade800 with 0.35 opacity
     final rimPath = Path();
     rimPath.moveTo(w * 0.15, sandTopY);
     rimPath.quadraticBezierTo(cx, sandTopY + funnelDepth, w * 0.85, sandTopY);
-    canvas.drawPath(rimPath, rimPaint);
+    canvas.drawPath(rimPath, _rimPaint);
   }
 
   double _calculateBottomPeakY(double h, double cy, double p) {
@@ -273,19 +308,11 @@ class _HourglassPainter extends CustomPainter {
 
     final baseY = h * 0.895 - (h * 0.895 - (cy + 14)) * bottomProg;
 
-    final sandGradient = LinearGradient(
+    _sandBottomPaint.shader = const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [
-        Colors.amber.shade300,
-        Colors.amber.shade500,
-        Colors.amber.shade700,
-      ],
+      colors: _bottomSandColors,
     ).createShader(Rect.fromLTRB(w * 0.15, peakY, w * 0.85, h * 0.90));
-
-    final sandPaint = Paint()
-      ..shader = sandGradient
-      ..style = PaintingStyle.fill;
 
     final path = Path();
     path.moveTo(w * 0.10, h * 0.92);
@@ -313,17 +340,14 @@ class _HourglassPainter extends CustomPainter {
     path.lineTo(w * 0.90, h * 0.92);
     path.close();
 
-    canvas.drawPath(path, sandPaint);
+    canvas.drawPath(path, _sandBottomPaint);
 
     // Subtle highlight on the mound peak ridge
-    final ridgePaint = Paint()
-      ..color = Colors.amber.shade200.withValues(alpha: 0.6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+    _ridgePaint.color = const Color(0x99FFE082); // amber.shade200 with 0.6 opacity
     final ridgePath = Path();
     ridgePath.moveTo(cx - 12, peakY + 3);
     ridgePath.quadraticBezierTo(cx, peakY, cx + 12, peakY + 3);
-    canvas.drawPath(ridgePath, ridgePaint);
+    canvas.drawPath(ridgePath, _ridgePaint);
   }
 
   void _drawFallingStream(
@@ -336,48 +360,31 @@ class _HourglassPainter extends CustomPainter {
     if (streamLength < 2) return;
 
     // 1. Core continuous flowing stream line
-    final streamPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Colors.amber.shade200,
-          Colors.amber.shade400,
-          Colors.amber.shade600,
-        ],
-      ).createShader(Rect.fromLTWH(cx - 3, cy, 6, streamLength))
-      ..strokeWidth = 2.4
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
+    _streamPaint.shader = const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: _topSandColors,
+    ).createShader(Rect.fromLTWH(cx - 3, cy, 6, streamLength));
 
-    canvas.drawLine(Offset(cx, cy), Offset(cx, bottomPeakY), streamPaint);
+    canvas.drawLine(Offset(cx, cy), Offset(cx, bottomPeakY), _streamPaint);
 
-    // 2. Animated grains accelerating under gravity along the stream
-    final grainPaint = Paint()..style = PaintingStyle.fill;
-
+    // 2. Animated grains accelerating under gravity along the stream (reusing _grainPaint)
     for (int i = 0; i < 16; i++) {
-      // Deterministic staggered seed
       final seed = (i * 0.0625);
       final t = (animValue + seed) % 1.0;
 
-      // Accelerated curve under gravity
       final curveT = math.pow(t, 1.4).toDouble();
       final py = cy + streamLength * curveT;
-
-      // Organic micro horizontal jitter
       final px = cx + math.sin(i * 4.3 + animValue * 22) * 1.3;
 
-      // Radius & color variety
       final isAccent = (i % 3 == 0);
-      grainPaint.color = isAccent ? Colors.amber.shade100 : Colors.amber.shade400;
+      _grainPaint.color = isAccent ? const Color(0xFFFFF9C4) : const Color(0xFFFFCA28);
       final radius = isAccent ? 1.5 : 1.1;
 
-      canvas.drawCircle(Offset(px, py), radius, grainPaint);
+      canvas.drawCircle(Offset(px, py), radius, _grainPaint);
     }
 
-    // 3. Landing splash & bouncing grains at impact peak
-    final splashPaint = Paint()..style = PaintingStyle.fill;
-
+    // 3. Landing splash & bouncing grains at impact peak (reusing _splashPaint)
     for (int i = 0; i < 8; i++) {
       final splashT = (animValue * 1.8 + i * 0.125) % 1.0;
       final dir = (i.isEven ? 1.0 : -1.0);
@@ -385,12 +392,11 @@ class _HourglassPainter extends CustomPainter {
       final dist = splashT * 12.0;
 
       final sx = cx + dir * math.cos(angle) * dist;
-      // Arc trajectory: rise then fall onto sand
       final sy = bottomPeakY - math.sin(angle) * dist * 0.6 + (splashT * splashT * 4.5);
       final alpha = ((1.0 - splashT) * 0.85).clamp(0.0, 1.0);
 
-      splashPaint.color = Colors.amber.shade200.withValues(alpha: alpha);
-      canvas.drawCircle(Offset(sx, sy), 1.2, splashPaint);
+      _splashPaint.color = const Color(0xFFFFE082).withValues(alpha: alpha);
+      canvas.drawCircle(Offset(sx, sy), 1.2, _splashPaint);
     }
   }
 
@@ -401,23 +407,21 @@ class _HourglassPainter extends CustomPainter {
     double cx,
     double cy,
   ) {
-    final reflectPaint = Paint()
-      ..color = Colors.white.withValues(alpha: isDark ? 0.22 : 0.35)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..strokeCap = StrokeCap.round;
+    _reflectPaint.color = isDark
+        ? const Color(0x38FFFFFF)
+        : const Color(0x59FFFFFF);
 
     // Specular curved streak on upper-left bulb
     final upperPath = Path();
     upperPath.moveTo(w * 0.26, h * 0.14);
     upperPath.cubicTo(w * 0.26, cy * 0.60, cx - 14, cy - 14, cx - 12, cy - 10);
-    canvas.drawPath(upperPath, reflectPaint);
+    canvas.drawPath(upperPath, _reflectPaint);
 
     // Specular curved streak on lower-left bulb
     final lowerPath = Path();
     lowerPath.moveTo(cx - 12, cy + 10);
     lowerPath.cubicTo(cx - 14, cy + 14, w * 0.26, h - (cy * 0.60), w * 0.26, h * 0.86);
-    canvas.drawPath(lowerPath, reflectPaint);
+    canvas.drawPath(lowerPath, _reflectPaint);
   }
 
   @override

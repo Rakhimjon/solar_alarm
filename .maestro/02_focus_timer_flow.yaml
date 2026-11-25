@@ -9,7 +9,8 @@ appId: com.example.solar_alarm
 - assertVisible: "Qat'iy rejim (Deep Work)"
 
 # Select 25 min preset
-- tapOn: "25 d"
+- tapOn:
+    text: ".*25.*"
 
 # Start timer
 - tapOn: "Boshlash"

@@ -89,6 +89,11 @@ void main() {
     expect(cubit.verifyMathAndDismiss(correctAnswer + 5), isFalse);
     expect(cubit.verifyMathAndDismiss(correctAnswer), isTrue);
 
+    // Verify solar ray taps
+    expect(cubit.state.remainingSunTaps, 5);
+    cubit.tapSunRay();
+    expect(cubit.state.remainingSunTaps, 4);
+
     // Toggle alarm
     await cubit.toggleAlarm(101);
     expect(cubit.state.alarms.first.isEnabled, isFalse);
