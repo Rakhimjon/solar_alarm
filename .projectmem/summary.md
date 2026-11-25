@@ -11,6 +11,7 @@ A new Flutter project.
 
 ## Decisions
 - Adopt 'Uyg'otgich' as pure Uzbek name for alarm, replace frustrating math addition mission with interactive Solar Rays Wake-up mission (5 gentle sun taps with morning affirmation)
+- Refactor: refactor: update ringing page indicator color and dynamic region in solar clock view [lib/features/alarm/presentation/pages/ringing_page.dart]
 
 ## Notes
 - feat: add flutter_launcher_icons dependency and configuration
