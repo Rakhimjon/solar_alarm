@@ -1,4 +1,5 @@
 import 'dart:math';
+
 import '../../domain/entities/solar_time_item.dart';
 
 class AstronomicalCalculator {
@@ -50,8 +51,8 @@ class AstronomicalCalculator {
     // Helper to calculate time offset from noon based on sun altitude angle
     double? getHourAngle(double sunAltitude) {
       final altRad = sunAltitude * _deg2rad;
-      final cosH = (sin(altRad) - sin(latRad) * sin(decl)) /
-          (cos(latRad) * cos(decl));
+      final cosH =
+          (sin(altRad) - sin(latRad) * sin(decl)) / (cos(latRad) * cos(decl));
       if (cosH > 1.0 || cosH < -1.0) return null;
       return acos(cosH) * _rad2deg / 15.0;
     }

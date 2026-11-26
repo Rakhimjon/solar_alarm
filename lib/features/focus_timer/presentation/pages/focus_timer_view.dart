@@ -2,8 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/theme_cubit.dart';
+import '../../../../core/widgets/custom_button.dart';
 import '../cubit/focus_timer_cubit.dart';
 import '../cubit/focus_timer_state.dart';
 import '../widgets/hourglass_widget.dart';
@@ -15,7 +17,8 @@ class FocusTimerView extends StatefulWidget {
   State<FocusTimerView> createState() => _FocusTimerViewState();
 }
 
-class _FocusTimerViewState extends State<FocusTimerView> with WidgetsBindingObserver {
+class _FocusTimerViewState extends State<FocusTimerView>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -42,7 +45,9 @@ class _FocusTimerViewState extends State<FocusTimerView> with WidgetsBindingObse
     final colors = context.appColors;
 
     return BlocConsumer<FocusTimerCubit, FocusTimerState>(
-      listenWhen: (prev, curr) => curr.warningMessage != null && curr.warningMessage != prev.warningMessage,
+      listenWhen: (prev, curr) =>
+          curr.warningMessage != null &&
+          curr.warningMessage != prev.warningMessage,
       listener: (context, state) {
         if (state.warningMessage != null) {
           showCupertinoDialog(
@@ -73,227 +78,136 @@ class _FocusTimerViewState extends State<FocusTimerView> with WidgetsBindingObse
 
         return Scaffold(
           backgroundColor: colors.background,
-          appBar: CupertinoNavigationBar(
-            middle: Text(
-              'Qumsoat Fokus',
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontSize: 17.sp,
-                fontWeight: FontWeight.w600,
+          appBar: AppBar(
+            title: const Text('Qumsoat Fokus'),
+            actions: [
+              IconButton(
+                icon: Icon(
+                  context.isDark
+                      ? Icons.light_mode_rounded
+                      : Icons.dark_mode_rounded,
+                  color: colors.primary,
+                ),
+                tooltip: context.isDark ? 'Yorug\' rejim' : 'Qorong\'u rejim',
+                onPressed: () => context.read<ThemeCubit>().toggleTheme(),
               ),
-            ),
-            backgroundColor: colors.background.withValues(alpha: context.isDark ? 0.78 : 0.88),
-            border: Border(
-              bottom: BorderSide(
-                color: colors.cardBorder.withValues(alpha: 0.5),
-                width: 0.5,
-              ),
-            ),
-            trailing: CupertinoButton(
-              padding: EdgeInsets.zero,
-              minimumSize: Size(36.r, 36.r),
-              onPressed: () => context.read<ThemeCubit>().toggleTheme(),
-              child: Icon(
-                context.isDark ? CupertinoIcons.sun_max_fill : CupertinoIcons.moon_fill,
-                color: colors.primary,
-                size: 22.r,
-              ),
-            ),
+            ],
           ),
           body: SafeArea(
             child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(20.w, 4.h, 20.w, 24.h),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Active task indicator (iOS Pill Tag)
-                  if (state.activeTaskTitle != null)
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
-                      decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: context.isDark ? 0.15 : 0.1),
-                        borderRadius: BorderRadius.circular(20.r),
-                        border: Border.all(
-                          color: colors.primary.withValues(alpha: 0.35),
-                          width: 0.8,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(CupertinoIcons.bookmark_fill, size: 15.r, color: colors.primary),
-                          SizedBox(width: 6.w),
-                          Flexible(
-                            child: Text(
-                              'Reja: ${state.activeTaskTitle}',
-                              style: TextStyle(
-                                color: colors.primary,
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w600,
+                  // Attached plan: plain text, tap ✕ to detach.
+                  SizedBox(
+                    height: 24.h,
+                    child: state.activeTaskTitle == null
+                        ? null
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  state.activeTaskTitle!,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: colors.textMuted,
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                               ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                              CupertinoButton(
+                                padding: EdgeInsets.only(left: 6.w),
+                                minimumSize: Size(28.r, 28.r),
+                                onPressed: () => cubit.attachTask(null, null),
+                                child: Icon(
+                                  CupertinoIcons.xmark_circle_fill,
+                                  size: 16.r,
+                                  color: colors.cardBorder,
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(width: 6.w),
-                          GestureDetector(
-                            onTap: () => cubit.attachTask(null, null),
-                            child: Icon(
-                              CupertinoIcons.clear_circled_solid,
-                              size: 16.r,
-                              color: colors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    Text(
-                      'Fokus rejasini tanlang yoki mustaqil boshlang',
-                      style: TextStyle(
-                        color: colors.textMuted,
-                        fontSize: 13.sp,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-
-                  SizedBox(height: 16.h),
-
-                  // Hourglass Graphic
+                  ),
+                  SizedBox(height: 8.h),
                   HourglassWidget(
                     progress: state.progress,
                     isRunning: isRunning,
-                    size: 190.r,
+                    size: 170.r,
                   ),
-                  SizedBox(height: 16.h),
-
-                  // Digital Countdown with iOS tabular figures
-                  Text(
-                    state.formattedTime,
-                    style: TextStyle(
-                      fontSize: 52.sp,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.5,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    state.status == FocusStatus.completed
-                        ? '🎉 Fokus vaqti tugadi!'
-                        : (isRunning
-                            ? (state.isLocked ? '🔒 Deep Work: Ilovalar to\'silgan' : 'Fokusda bo\'ling...')
-                            : 'Tayyormisiz?'),
-                    style: TextStyle(
-                      color: state.status == FocusStatus.completed || state.isLocked
-                          ? colors.primary
-                          : colors.textMuted,
-                      fontSize: 14.sp,
-                      fontWeight: state.isLocked ? FontWeight.w600 : FontWeight.w400,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-
                   SizedBox(height: 20.h),
 
-                  // Duration Presets using CupertinoSlidingSegmentedControl
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(horizontal: 4.w),
-                    child: CupertinoSlidingSegmentedControl<int>(
-                      groupValue: state.totalSeconds ~/ 60,
-                      backgroundColor: context.isDark
-                          ? const Color(0xFF1E2837)
-                          : const Color(0xFFE2E8F0),
-                      thumbColor: context.isDark ? colors.card : Colors.white,
-                      children: {
-                        15: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 9.h),
-                          child: Text(
-                            '15 daq',
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              fontWeight: state.totalSeconds == 15 * 60 ? FontWeight.w600 : FontWeight.w500,
-                              color: state.totalSeconds == 15 * 60 ? colors.primary : colors.textPrimary,
-                            ),
-                          ),
+                  // Tap the time to set a custom duration (only when idle).
+                  Semantics(
+                    button: state.status == FocusStatus.idle,
+                    label: 'Vaqtni o\'zgartirish',
+                    child: GestureDetector(
+                      onTap: state.status == FocusStatus.idle
+                          ? () => _pickDuration(context, state.totalSeconds)
+                          : null,
+                      child: Text(
+                        state.formattedTime,
+                        style: TextStyle(
+                          fontSize: 64.sp,
+                          fontWeight: FontWeight.w200,
+                          letterSpacing: 1,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                          color: colors.textPrimary,
                         ),
-                        25: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 9.h),
-                          child: Text(
-                            '25 daq',
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              fontWeight: state.totalSeconds == 25 * 60 ? FontWeight.w600 : FontWeight.w500,
-                              color: state.totalSeconds == 25 * 60 ? colors.primary : colors.textPrimary,
-                            ),
-                          ),
-                        ),
-                        45: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 9.h),
-                          child: Text(
-                            '45 daq',
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              fontWeight: state.totalSeconds == 45 * 60 ? FontWeight.w600 : FontWeight.w500,
-                              color: state.totalSeconds == 45 * 60 ? colors.primary : colors.textPrimary,
-                            ),
-                          ),
-                        ),
-                        60: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 9.h),
-                          child: Text(
-                            '60 daq',
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              fontWeight: state.totalSeconds == 60 * 60 ? FontWeight.w600 : FontWeight.w500,
-                              color: state.totalSeconds == 60 * 60 ? colors.primary : colors.textPrimary,
-                            ),
-                          ),
-                        ),
-                      },
-                      onValueChanged: (val) {
-                        if (isRunning || val == null) return;
-                        cubit.setDurationMinutes(val);
-                      },
+                      ),
                     ),
                   ),
+                  Text(
+                    state.status == FocusStatus.completed
+                        ? 'Fokus vaqti tugadi 🎉'
+                        : isRunning
+                        ? (state.isLocked ? '🔒 Deep Work' : 'Fokusda bo\'ling')
+                        : state.status == FocusStatus.idle
+                        ? 'Vaqtni o\'zgartirish uchun bosing'
+                        : 'Pauza',
+                    style: TextStyle(
+                      color: state.isLocked ? colors.primary : colors.textMuted,
+                      fontSize: 13.sp,
+                    ),
+                  ),
+                  SizedBox(height: 24.h),
 
-                  SizedBox(height: 16.h),
+                  // Presets: plain text, selected one in primary color.
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [15, 25, 45, 60].map((m) {
+                      final selected = state.totalSeconds == m * 60;
+                      return CupertinoButton(
+                        padding: EdgeInsets.symmetric(horizontal: 12.w),
+                        onPressed: isRunning
+                            ? null
+                            : () => cubit.setDurationMinutes(m),
+                        child: Text(
+                          '$m daq',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: selected
+                                ? FontWeight.w700
+                                : FontWeight.w400,
+                            color: selected ? colors.primary : colors.textMuted,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  SizedBox(height: 12.h),
 
-                  // Deep Work Mode Switch Card (iOS Grouped Cell Style)
+                  // Deep Work row.
                   Container(
-                    margin: EdgeInsets.symmetric(horizontal: 4.w),
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                    padding: EdgeInsets.fromLTRB(16.w, 6.h, 10.w, 6.h),
                     decoration: BoxDecoration(
                       color: colors.card,
                       borderRadius: BorderRadius.circular(16.r),
-                      border: Border.all(
-                        color: state.isLocked
-                            ? colors.primary.withValues(alpha: 0.6)
-                            : colors.cardBorder.withValues(alpha: 0.8),
-                        width: state.isLocked ? 1.5 : 0.8,
-                      ),
                     ),
                     child: Row(
                       children: [
-                        Container(
-                          padding: EdgeInsets.all(8.r),
-                          decoration: BoxDecoration(
-                            color: (state.isLocked ? colors.primary : colors.textMuted)
-                                .withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                          child: Icon(
-                            state.isLocked ? CupertinoIcons.lock_fill : CupertinoIcons.lock,
-                            size: 20.r,
-                            color: state.isLocked ? colors.primary : colors.textMuted,
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,20 +216,15 @@ class _FocusTimerViewState extends State<FocusTimerView> with WidgetsBindingObse
                                 'Qat\'iy rejim (Deep Work)',
                                 style: TextStyle(
                                   fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w500,
                                   color: colors.textPrimary,
-                                  letterSpacing: -0.2,
                                 ),
                               ),
-                              SizedBox(height: 2.h),
                               Text(
-                                state.isLocked
-                                    ? 'Ilova qulflangan (Pauza bosilguncha)'
-                                    : 'Boshqa ilovalarga o\'tishni to\'sish',
+                                'Boshqa ilovalarga o\'tishni to\'sish',
                                 style: TextStyle(
-                                  fontSize: 11.5.sp,
-                                  color: state.isLocked ? colors.primary : colors.textMuted,
-                                  letterSpacing: -0.1,
+                                  fontSize: 12.sp,
+                                  color: colors.textMuted,
                                 ),
                               ),
                             ],
@@ -324,79 +233,52 @@ class _FocusTimerViewState extends State<FocusTimerView> with WidgetsBindingObse
                         CupertinoSwitch(
                           value: state.isDeepWorkEnabled,
                           activeTrackColor: colors.primary,
-                          onChanged: isRunning ? null : (v) => cubit.toggleDeepWork(v),
+                          onChanged: isRunning
+                              ? null
+                              : (v) => cubit.toggleDeepWork(v),
                         ),
                       ],
                     ),
                   ),
+                  SizedBox(height: 28.h),
 
-                  SizedBox(height: 24.h),
-
-                  // Action Controls (iOS Cupertino Buttons)
+                  // Controls.
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (state.status != FocusStatus.idle)
+                      if (state.status != FocusStatus.idle) ...[
                         CupertinoButton(
                           padding: EdgeInsets.zero,
                           minimumSize: Size(52.r, 52.r),
-                          borderRadius: BorderRadius.circular(26.r),
-                          color: colors.card,
-                          onPressed: () => cubit.reset(),
-                          child: Container(
-                            width: 52.r,
-                            height: 52.r,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: colors.cardBorder.withValues(alpha: 0.8),
-                                width: 0.8,
-                              ),
-                            ),
-                            alignment: Alignment.center,
-                            child: Icon(
-                              CupertinoIcons.arrow_counterclockwise,
-                              size: 22.r,
-                              color: colors.textMuted,
-                            ),
+                          onPressed: cubit.reset,
+                          child: Icon(
+                            CupertinoIcons.arrow_counterclockwise,
+                            size: 22.r,
+                            color: colors.textMuted,
                           ),
                         ),
-                      if (state.status != FocusStatus.idle) SizedBox(width: 16.w),
-                      CupertinoButton(
-                        padding: EdgeInsets.symmetric(horizontal: 40.w, vertical: 15.h),
-                        borderRadius: BorderRadius.circular(30.r),
-                        color: isRunning ? colors.card : colors.primary,
-                        onPressed: () {
-                          if (isRunning) {
-                            cubit.pause();
-                          } else {
-                            cubit.start();
-                          }
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              isRunning ? CupertinoIcons.pause_fill : CupertinoIcons.play_fill,
-                              size: 20.r,
-                              color: isRunning ? colors.textPrimary : Colors.white,
-                            ),
-                            SizedBox(width: 8.w),
-                            Text(
-                              isRunning ? 'Pauza' : 'Boshlash',
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w600,
-                                color: isRunning ? colors.textPrimary : Colors.white,
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                          ],
+                        SizedBox(width: 12.w),
+                      ],
+                      CustomButton(
+                        title: isRunning ? 'Pauza' : 'Boshlash',
+                        icon: Icon(
+                          isRunning
+                              ? CupertinoIcons.pause_fill
+                              : CupertinoIcons.play_fill,
                         ),
+                        borderRadius: 30.r,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 40.w,
+                          vertical: 15.h,
+                        ),
+                        backgroundColor: isRunning ? colors.card : null,
+                        foregroundColor: isRunning ? colors.textPrimary : null,
+                        onTap: isRunning ? cubit.pause : cubit.start,
                       ),
+                      if (state.status != FocusStatus.idle)
+                        SizedBox(width: 64.r),
                     ],
                   ),
-                  SizedBox(height: 24.h),
                 ],
               ),
             ),
@@ -404,5 +286,70 @@ class _FocusTimerViewState extends State<FocusTimerView> with WidgetsBindingObse
         );
       },
     );
+  }
+
+  Future<void> _pickDuration(BuildContext context, int currentSeconds) async {
+    final colors = context.appColors;
+    final cubit = context.read<FocusTimerCubit>();
+    var picked = Duration(seconds: currentSeconds);
+
+    final confirmed = await showCupertinoModalPopup<bool>(
+      context: context,
+      builder: (ctx) => Container(
+        height: 300.h,
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  CupertinoButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text(
+                      'Bekor',
+                      style: TextStyle(color: colors.textMuted),
+                    ),
+                  ),
+                  CupertinoButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: Text(
+                      'Tayyor',
+                      style: TextStyle(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: CupertinoTheme(
+                  data: CupertinoThemeData(
+                    brightness: context.isDark
+                        ? Brightness.dark
+                        : Brightness.light,
+                  ),
+                  child: CupertinoTimerPicker(
+                    mode: CupertinoTimerPickerMode.hm,
+                    initialTimerDuration: picked,
+                    onTimerDurationChanged: (d) => picked = d,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // Minimum 1 minute; the timer works in whole minutes.
+    if (confirmed == true && picked.inMinutes > 0) {
+      cubit.setDurationMinutes(picked.inMinutes);
+    }
   }
 }

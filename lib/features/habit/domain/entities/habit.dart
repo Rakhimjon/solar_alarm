@@ -108,30 +108,29 @@ class Habit {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'emoji': emoji,
-        'colorValue': colorValue,
-        'weekdays': weekdays,
-        'createdAt': createdAt.toIso8601String(),
-        'completedDates': completedDates.toList(),
-      };
+    'id': id,
+    'name': name,
+    'emoji': emoji,
+    'colorValue': colorValue,
+    'weekdays': weekdays,
+    'createdAt': createdAt.toIso8601String(),
+    'completedDates': completedDates.toList(),
+  };
 
   factory Habit.fromJson(Map<String, dynamic> json) => Habit(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        emoji: json['emoji'] as String? ?? '⭐',
-        colorValue: json['colorValue'] as int? ?? 0xFFF59E0B,
-        weekdays: (json['weekdays'] as List<dynamic>? ?? const [])
-            .map((e) => e as int)
-            .toList(),
-        createdAt:
-            DateTime.tryParse(json['createdAt'] as String? ?? '') ??
-                DateTime.now(),
-        completedDates: ((json['completedDates'] as List<dynamic>?) ?? const [])
-            .map((e) => e as String)
-            .toSet(),
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    emoji: json['emoji'] as String? ?? '⭐',
+    colorValue: json['colorValue'] as int? ?? 0xFFF59E0B,
+    weekdays: (json['weekdays'] as List<dynamic>? ?? const [])
+        .map((e) => e as int)
+        .toList(),
+    createdAt:
+        DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+    completedDates: ((json['completedDates'] as List<dynamic>?) ?? const [])
+        .map((e) => e as String)
+        .toSet(),
+  );
 
   static String _dateKey(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';

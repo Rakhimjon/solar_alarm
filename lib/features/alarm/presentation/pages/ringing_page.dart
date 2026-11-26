@@ -5,15 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/router/path.dart';
+import '../../../../core/widgets/custom_button.dart';
 import '../cubit/alarm_cubit.dart';
 import '../cubit/alarm_state.dart';
 
 class RingingPage extends StatefulWidget {
-  final Function(int)? onSwitchTab;
-
-  const RingingPage({super.key, this.onSwitchTab});
+  const RingingPage({super.key});
 
   @override
   State<RingingPage> createState() => _RingingPageState();
@@ -54,7 +55,7 @@ class _RingingPageState extends State<RingingPage>
     return BlocListener<AlarmCubit, AlarmState>(
       listenWhen: (prev, curr) => prev.isRinging && !curr.isRinging,
       listener: (context, _) {
-        if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+        if (context.canPop()) context.pop();
       },
       child: BlocBuilder<AlarmCubit, AlarmState>(
         builder: (context, state) {
@@ -108,7 +109,7 @@ class _RingingPageState extends State<RingingPage>
                         hasMission: hasMission,
                         onFocus: () {
                           context.read<AlarmCubit>().dismissRinging();
-                          widget.onSwitchTab?.call(1);
+                          context.go(RoutePath.focus);
                         },
                         onSnooze: () => context
                             .read<AlarmCubit>()
@@ -335,70 +336,54 @@ class _BottomActions extends StatelessWidget {
     return Column(
       children: [
         if (!hasMission) ...[
-          SizedBox(
-            width: double.infinity,
-            child: CupertinoButton(
-              color: Colors.amber.shade700,
-              borderRadius: BorderRadius.circular(14.r),
-              padding: EdgeInsets.symmetric(vertical: 14.h),
-              onPressed: onFocus,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    CupertinoIcons.hourglass,
-                    color: Colors.black87,
-                    size: 18.r,
-                  ),
-                  SizedBox(width: 8.w),
-                  Text(
-                    '🚀 25 daq Fokus bilan boshlash',
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.sp,
-                    ),
-                  ),
-                ],
-              ),
+          CustomButton(
+            title: '🚀 25 daq Fokus bilan boshlash',
+            icon: Icon(CupertinoIcons.hourglass, size: 18.r),
+            isFullWidth: true,
+            backgroundColor: Colors.amber.shade700,
+            foregroundColor: Colors.black87,
+            padding: EdgeInsets.symmetric(vertical: 14.h),
+            textStyle: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.bold,
+              fontSize: 14.sp,
             ),
+            onTap: onFocus,
           ),
           SizedBox(height: 10.h),
         ],
         Row(
           children: [
             Expanded(
-              child: CupertinoButton(
-                color: Colors.white12,
-                borderRadius: BorderRadius.circular(14.r),
+              child: CustomButton(
+                title: '💤 5 daq kuting',
+                isFullWidth: true,
+                backgroundColor: Colors.white12,
+                foregroundColor: Colors.white60,
                 padding: EdgeInsets.symmetric(vertical: 14.h),
-                onPressed: onSnooze,
-                child: Text(
-                  '💤 5 daq kuting',
-                  style: TextStyle(
-                    color: Colors.white60,
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
+                textStyle: TextStyle(
+                  color: Colors.white60,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w500,
                 ),
+                onTap: onSnooze,
               ),
             ),
             if (!hasMission) ...[
               SizedBox(width: 10.w),
               Expanded(
-                child: CupertinoButton(
-                  color: Colors.red.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(14.r),
+                child: CustomButton(
+                  title: "To'xtatish",
+                  isFullWidth: true,
+                  backgroundColor: Colors.red.withValues(alpha: 0.15),
+                  foregroundColor: Colors.red.shade300,
                   padding: EdgeInsets.symmetric(vertical: 14.h),
-                  onPressed: onDismiss,
-                  child: Text(
-                    "To'xtatish",
-                    style: TextStyle(
-                      color: Colors.red.shade300,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  textStyle: TextStyle(
+                    color: Colors.red.shade300,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
                   ),
+                  onTap: onDismiss,
                 ),
               ),
             ],

@@ -1,6 +1,6 @@
 # projectmem - solar_alarm
 
-_Last updated: 2026-11-25_
+_Last updated: 2026-11-26_
 
 ## Project purpose
 A new Flutter project.
@@ -25,11 +25,12 @@ A new Flutter project.
 - Adopt 'Uyg'otgich' as pure Uzbek name for alarm, replace frustrating math addition mission with interactive Solar Rays Wake-up mission (5 gentle sun taps with morning affirmation)
 - Refactor: refactor: update ringing page indicator color and dynamic region in solar clock view [lib/features/alarm/presentation/pages/ringing_page.dart]
 - Planner creation uses a dedicated screen: timed tasks open Focus Timer attached to the task; no-timer tasks stay in Planner and complete directly [lib/features/planner/presentation/]
+- Planner 'Yangi Reja' FAB replaced with custom CupertinoButton (tinted primary bg + primary foreground, thin border), centered via centerFloat [lib/features/planner/presentation/pages/planner_view.dart]
+- Habits minimalist UI: replaced FAB with tinted Cupertino centerFloat button (primary bg alpha + thin border, primary text/ikon), replaced Material TextFormField with CupertinoTextField (iOS style), replaced save ElevatedButton with tinted CupertinoButton [lib/features/habit/presentation/pages/{habit_view,add_habit_page}.dart]
+- Navigation moved to go_router (moliyachi pattern): RoutePath constants in lib/core/router/path.dart, GoRouter in router.dart, tabs via StatefulShellRoute.indexedStack; tab switches use context.go(RoutePath.focus) instead of onSwitchTab callbacks. Shared CustomButton in lib/core/widgets/custom_button.dart (tinted primary default, filled via backgroundColor). Habit tab redesigned minimal: week strip with per-day progress rings + month calendar on detail page (tap past days to toggle, HabitCubit.toggleDate). [lib/core/router/router.dart]
+- Minimal UI pass across tabs: borderless cards (colors.card, radius 16), single primary accent, Cupertino switches/segments. Alarm list = large thin time + one muted detail line; alarm editor uses inline CupertinoDatePicker and grouped rows (sound via action sheet). Focus: tap the countdown when idle to set a custom duration (CupertinoTimerPicker, hm, min 1 minute); presets are plain text. [lib/features/focus_timer/presentation/pages/focus_timer_view.dart]
 
 ## Notes
-- feat: add flutter_launcher_icons dependency and configuration
-- feat: update application launcher icons for Android and iOS
-- feat: add kiosk service and theme management with dark/light support
 - feat: implement alarm feature with storage, repository, cubit, and UI views
 - feat: add Maestro E2E test suite and math challenge mission to alarms
 - feat: add task categories and filtering to planner view
@@ -37,6 +38,9 @@ A new Flutter project.
 - New feature: feat: add Patrol E2E test suite and integration test configuration [integration_test/app_e2e_test.dart]
 - Removed math mission remnants (mathOperand1/2, mathAnswer, verifyMathAndDismiss) from AlarmState and AlarmCubit. Created full-screen RingingPage (iOS black style, pulsing sun ScaleTransition, animated progress dots, fade route transition). alarm_view.dart now pushes RingingPage via rootNavigator instead of showing AlertDialog. Added patrol E2E test for alarm creation flow.
 - New feature: feat: replace math alarm mission with full-screen ringing page and add E2E test [lib/features/alarm/presentation/cubit/alarm_cubit.dart]
+- gotcha: Maestro iOS E2E loses Flutter semantics tree after inputText focuses a TextField (only status bar exposed); type+save legs can't be asserted. Workaround: keep flow to tap/assert navigation only. [.maestro/03_planner_flow.yaml]
+- pre-existing iOS build breakage unrelated to this task: lib/features/alarm/presentation/pages/ringing_page.dart uses undefined CustomButton (lines 339,358,375); blocks full flutter build ios / Maestro until fixed separately [lib/features/alarm/presentation/pages/ringing_page.dart]
+- New feature: feat: add habit feature, go_router navigation, and UI minimal polish [lib/di.dart]
 
 ## Key files
 - `.gitignore`

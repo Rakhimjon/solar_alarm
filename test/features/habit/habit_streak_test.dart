@@ -11,7 +11,11 @@ void main() {
         id: 'h',
         name: 'daily',
         createdAt: DateTime(2026, 11, 20),
-        completedDates: {key(2026, 11, 24), key(2026, 11, 25), key(2026, 11, 26)},
+        completedDates: {
+          key(2026, 11, 24),
+          key(2026, 11, 25),
+          key(2026, 11, 26),
+        },
       );
       expect(habit.currentStreak(DateTime(2026, 11, 26)), 3);
     });

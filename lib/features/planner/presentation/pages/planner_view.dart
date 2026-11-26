@@ -1,19 +1,19 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import 'package:solar_alarm/core/router/path.dart';
 import 'package:solar_alarm/core/theme/app_theme.dart';
 import 'package:solar_alarm/core/theme/theme_cubit.dart';
+import 'package:solar_alarm/core/widgets/custom_button.dart';
 import 'package:solar_alarm/features/focus_timer/presentation/cubit/focus_timer_cubit.dart';
 import 'package:solar_alarm/features/planner/domain/entities/plan_task.dart';
 import 'package:solar_alarm/features/planner/presentation/cubit/planner_cubit.dart';
 import 'package:solar_alarm/features/planner/presentation/cubit/planner_state.dart';
 
-import 'add_plan_page.dart';
-
 class PlannerView extends StatefulWidget {
-  final Function(int)? onSwitchTab;
-
-  const PlannerView({super.key, this.onSwitchTab});
+  const PlannerView({super.key});
 
   @override
   State<PlannerView> createState() => _PlannerViewState();
@@ -39,20 +39,16 @@ class _PlannerViewState extends State<PlannerView> {
         ? categories.first
         : _selectedCategory;
 
-    final task = await Navigator.of(context).push<PlanTask>(
-      MaterialPageRoute(
-        builder: (_) => AddPlanPage(
-          categories: categories,
-          initialCategory: initialCategory,
-        ),
-      ),
+    final task = await context.push<PlanTask>(
+      RoutePath.addPlan,
+      extra: {'categories': categories, 'initialCategory': initialCategory},
     );
 
     if (!mounted || task == null) return;
     if (task.useTimer) {
       context.read<FocusTimerCubit>().attachTask(task.id, task.title);
       context.read<FocusTimerCubit>().setDurationMinutes(task.targetMinutes);
-      widget.onSwitchTab?.call(1);
+      context.go(RoutePath.focus);
       return;
     }
 
@@ -63,7 +59,7 @@ class _PlannerViewState extends State<PlannerView> {
   void _startFocus(PlanTask task) {
     context.read<FocusTimerCubit>().attachTask(task.id, task.title);
     context.read<FocusTimerCubit>().setDurationMinutes(task.targetMinutes);
-    widget.onSwitchTab?.call(1);
+    context.go(RoutePath.focus);
   }
 
   @override
@@ -118,35 +114,30 @@ class _PlannerViewState extends State<PlannerView> {
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
                   itemCount: _categories.length,
-                  separatorBuilder: (_, _) => SizedBox(width: 8.w),
+                  separatorBuilder: (_, _) => SizedBox(width: 4.w),
                   itemBuilder: (context, index) {
                     final category = _categories[index];
                     final title = category['title'] as String;
                     final selected = title == _selectedCategory;
-                    return FilterChip(
-                      selected: selected,
-                      avatar: Icon(
-                        category['icon'] as IconData,
-                        size: 16.r,
-                        color: selected ? colors.onPrimary : colors.textMuted,
+                    return CupertinoButton(
+                      padding: EdgeInsets.symmetric(horizontal: 12.w),
+                      minimumSize: Size(0, 36.h),
+                      borderRadius: BorderRadius.circular(18.r),
+                      color: selected
+                          ? colors.primary.withValues(alpha: 0.15)
+                          : null,
+                      onPressed: () =>
+                          setState(() => _selectedCategory = title),
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          color: selected ? colors.primary : colors.textMuted,
+                          fontSize: 13.sp,
+                          fontWeight: selected
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                        ),
                       ),
-                      label: Text(title),
-                      labelStyle: TextStyle(
-                        color: selected ? colors.onPrimary : colors.textPrimary,
-                        fontSize: 12.sp,
-                        fontWeight: selected
-                            ? FontWeight.bold
-                            : FontWeight.w500,
-                      ),
-                      backgroundColor: colors.card,
-                      selectedColor: colors.primary,
-                      showCheckmark: false,
-                      side: BorderSide(
-                        color: selected ? colors.primary : colors.cardBorder,
-                      ),
-                      onSelected: (_) {
-                        setState(() => _selectedCategory = title);
-                      },
                     );
                   },
                 ),
@@ -155,7 +146,7 @@ class _PlannerViewState extends State<PlannerView> {
               Expanded(
                 child:
                     state.status == PlannerStatus.loading && state.tasks.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const Center(child: CupertinoActivityIndicator())
                     : filteredTasks.isEmpty
                     ? _EmptyState(category: _selectedCategory)
                     : ListView.separated(
@@ -176,15 +167,27 @@ class _PlannerViewState extends State<PlannerView> {
               ),
             ],
           ),
-          floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: colors.primary,
-            foregroundColor: colors.onPrimary,
-            onPressed: _openAddTask,
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Yangi Reja'),
-          ),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerFloat,
+          floatingActionButton: _AddPlanButton(onPressed: _openAddTask),
         );
       },
+    );
+  }
+}
+
+class _AddPlanButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _AddPlanButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomButton(
+      title: 'Yangi Reja',
+      icon: const Icon(CupertinoIcons.add),
+      borderRadius: 28.r,
+      onTap: onPressed,
     );
   }
 }
@@ -217,8 +220,7 @@ class _HeroCard extends StatelessWidget {
       padding: EdgeInsets.all(16.r),
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: colors.cardBorder),
+        borderRadius: BorderRadius.circular(16.r),
       ),
       child: Row(
         children: [
@@ -336,9 +338,6 @@ class _TaskCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.card,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: task.isCompleted ? Colors.green : colors.cardBorder,
-        ),
       ),
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
@@ -429,14 +428,20 @@ class _TaskCard extends StatelessWidget {
                     ),
                   ),
                   if (task.useTimer && !task.isCompleted)
-                    FilledButton.tonalIcon(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: colors.primary.withValues(alpha: 0.15),
-                        foregroundColor: colors.primary,
-                      ),
-                      onPressed: onFocus,
+                    CustomButton(
+                      title: 'Fokus',
                       icon: Icon(Icons.hourglass_top_rounded, size: 16.r),
-                      label: const Text('Fokus'),
+                      borderRadius: 20.r,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 8.h,
+                      ),
+                      textStyle: TextStyle(
+                        color: colors.primary,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      onTap: onFocus,
                     ),
                 ],
               ),

@@ -1,13 +1,31 @@
+// ignore: duplicate_import
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:solar_alarm/core/theme/app_theme.dart';
+import 'package:solar_alarm/core/widgets/custom_button.dart';
 import 'package:solar_alarm/features/habit/domain/entities/habit.dart';
 import 'package:solar_alarm/features/habit/presentation/cubit/habit_cubit.dart';
 
 const List<String> kHabitEmojis = [
-  '💧', '📖', '🏃', '🧘', '💪', '🦷', '🌅', '🕌',
-  '✍️', '🥗', '😴', '🚶', '🎯', '🧠', '🙏', '☀️',
+  '💧',
+  '📖',
+  '🏃',
+  '🧘',
+  '💪',
+  '🦷',
+  '🌅',
+  '🕌',
+  '✍️',
+  '🥗',
+  '😴',
+  '🚶',
+  '🎯',
+  '🧠',
+  '🙏',
+  '☀️',
 ];
 
 const List<int> kHabitColorValues = [
@@ -82,7 +100,7 @@ class _AddHabitPageState extends State<AddHabitPage> {
           weekdays: _everyDay ? const [] : List.from(_weekdays),
         );
       }
-      if (mounted) Navigator.pop(context);
+      if (mounted) context.pop();
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -99,7 +117,9 @@ class _AddHabitPageState extends State<AddHabitPage> {
     final colors = context.appColors;
 
     return Scaffold(
-      appBar: AppBar(title: Text(isEditing ? 'Odatni tahrirlash' : 'Yangi odat')),
+      appBar: AppBar(
+        title: Text(isEditing ? 'Odatni tahrirlash' : 'Yangi odat'),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
@@ -108,23 +128,10 @@ class _AddHabitPageState extends State<AddHabitPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TextFormField(
+                _HabitTextField(
                   controller: _nameController,
-                  autofocus: !isEditing,
-                  maxLength: 60,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _save(),
-                  style: TextStyle(color: colors.textPrimary, fontSize: 16.sp),
-                  decoration: InputDecoration(
-                    labelText: 'Odat nomi',
-                    hintText: 'Masalan: 2 stakan suv ichish',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
-                  ),
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? 'Odat nomini kiriting'
-                      : null,
+                  placeholder: 'Masalan: 2 stakan suv ichish',
+                  onSubmitted: (_) => _save(),
                 ),
                 SizedBox(height: 16.h),
                 _sectionTitle('Belgi (emoji)', colors),
@@ -145,7 +152,9 @@ class _AddHabitPageState extends State<AddHabitPage> {
                               : colors.card,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: selected ? colors.primary : colors.cardBorder,
+                            color: selected
+                                ? colors.primary
+                                : colors.cardBorder,
                             width: selected ? 2 : 1,
                           ),
                         ),
@@ -198,7 +207,6 @@ class _AddHabitPageState extends State<AddHabitPage> {
                   decoration: BoxDecoration(
                     color: colors.card,
                     borderRadius: BorderRadius.circular(14.r),
-                    border: Border.all(color: colors.cardBorder),
                   ),
                   child: Row(
                     children: [
@@ -237,32 +245,12 @@ class _AddHabitPageState extends State<AddHabitPage> {
                   ),
                 ],
                 SizedBox(height: 24.h),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: colors.onPrimary,
-                    minimumSize: Size.fromHeight(52.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
-                  ),
-                  onPressed: _isSaving ? null : _save,
-                  child: _isSaving
-                      ? SizedBox(
-                          width: 18.r,
-                          height: 18.r,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: colors.onPrimary,
-                          ),
-                        )
-                      : Text(
-                          isEditing ? 'Saqlash' : 'Odatni qo\'shish',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                CustomButton(
+                  title: isEditing ? 'Saqlash' : 'Odatni qo\'shish',
+                  isFullWidth: true,
+                  isLoading: _isSaving,
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  onTap: _save,
                 ),
               ],
             ),
@@ -345,6 +333,38 @@ class _AddHabitPageState extends State<AddHabitPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _HabitTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String placeholder;
+  final ValueChanged<String>? onSubmitted;
+
+  const _HabitTextField({
+    required this.controller,
+    required this.placeholder,
+    this.onSubmitted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return CupertinoTextField(
+      controller: controller,
+      placeholder: placeholder,
+      placeholderStyle: TextStyle(
+        color: colors.textMuted.withValues(alpha: 0.6),
+        fontSize: 15.sp,
+      ),
+      style: TextStyle(color: colors.textPrimary, fontSize: 15.sp),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      onSubmitted: onSubmitted,
     );
   }
 }

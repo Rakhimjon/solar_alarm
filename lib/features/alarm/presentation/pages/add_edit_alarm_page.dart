@@ -1,6 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/alarm_permissions.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -98,7 +100,7 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
         region: solarState.region,
       );
 
-      if (mounted) Navigator.pop(context);
+      if (mounted) context.pop();
     } catch (_) {
       if (mounted) {
         _showError('Uyg\'otgichni saqlash imkoni bo\'lmadi');
@@ -111,7 +113,7 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
   Future<void> _delete() async {
     try {
       await context.read<AlarmCubit>().deleteAlarm(widget.initialAlarm!.id);
-      if (mounted) Navigator.pop(context);
+      if (mounted) context.pop();
     } catch (_) {
       if (mounted) _showError('Uyg\'otgichni o\'chirish imkoni bo\'lmadi');
     }
@@ -132,462 +134,287 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
         leading: IconButton(
           icon: Icon(Icons.close_rounded, size: 24.r),
           tooltip: 'Chiqish',
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
-        title: Text(
-          isEditing ? 'Uyg\'otgichni Tahrirlash' : 'Yangi Uyg\'otgich',
-          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
-        ),
+        title: Text(isEditing ? 'Tahrirlash' : 'Yangi Uyg\'otgich'),
         actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 8.w),
-            child: TextButton(
-              onPressed: _isSaving ? null : _save,
-              child: Text(
-                'Saqlash',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: colors.primary,
-                ),
-              ),
-            ),
+          CupertinoButton(
+            onPressed: _isSaving ? null : _save,
+            child: _isSaving
+                ? const CupertinoActivityIndicator()
+                : Text(
+                    'Saqlash',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: colors.primary,
+                    ),
+                  ),
           ),
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 1. Mode Segmented Switch
-              Container(
-                padding: EdgeInsets.all(4.r),
-                decoration: BoxDecoration(
-                  color: colors.card,
-                  borderRadius: BorderRadius.circular(14.r),
-                  border: Border.all(color: colors.cardBorder),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _segmentedTab(
-                        label: '⏰ Aniq Vaqt',
-                        isSelected: _modeIndex == 0,
-                        onTap: () => setState(() => _modeIndex = 0),
-                        colors: colors,
-                      ),
-                    ),
-                    Expanded(
-                      child: _segmentedTab(
-                        label: '☀️ Quyosh / Namoz',
-                        isSelected: _modeIndex == 1,
-                        onTap: () => setState(() => _modeIndex = 1),
-                        colors: colors,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 16.h),
-
-              // 2. Time or Solar Selection Card
-              if (_modeIndex == 0) ...[
-                _buildTimeCard(colors),
-              ] else ...[
-                _buildSolarCard(colors),
-              ],
-
-              SizedBox(height: 16.h),
-
-              // 3. Settings Group Card
-              Container(
-                decoration: BoxDecoration(
-                  color: colors.card,
-                  borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(color: colors.cardBorder),
-                ),
-                child: Column(
-                  children: [
-                    // Label field
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 12.h,
-                      ),
-                      child: TextField(
-                        controller: _labelController,
-                        style: TextStyle(
-                          color: colors.textPrimary,
-                          fontSize: 14.sp,
-                        ),
-                        decoration: InputDecoration(
-                          labelText: 'Budilnik nomi',
-                          labelStyle: TextStyle(
-                            color: colors.textMuted,
-                            fontSize: 13.sp,
-                          ),
-                          prefixIcon: Icon(
-                            Icons.edit_note_rounded,
-                            color: colors.primary,
-                            size: 22.r,
-                          ),
-                          border: InputBorder.none,
-                          isDense: true,
-                        ),
-                      ),
-                    ),
-
-                    Divider(height: 1, color: colors.cardBorder),
-
-                    // Sound Selector
-                    Padding(
-                      padding: EdgeInsets.all(16.w),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.volume_up_rounded,
-                                color: colors.primary,
-                                size: 20.r,
-                              ),
-                              SizedBox(width: 8.w),
-                              Text(
-                                'Ovoz (Baland signal)',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: colors.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 10.h),
-                          Wrap(
-                            spacing: 8.w,
-                            runSpacing: 8.h,
-                            children: AlarmSoundOption.all.map((sound) {
-                              final isSelected =
-                                  _selectedSound.path == sound.path;
-                              return ChoiceChip(
-                                label: Text(
-                                  sound.title,
-                                  style: TextStyle(fontSize: 12.sp),
-                                ),
-                                selected: isSelected,
-                                selectedColor: colors.primary,
-                                backgroundColor: colors.background,
-                                side: BorderSide(
-                                  color: isSelected
-                                      ? colors.primary
-                                      : colors.cardBorder,
-                                ),
-                                labelStyle: TextStyle(
-                                  color: isSelected
-                                      ? Colors.white
-                                      : colors.textPrimary,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                                onSelected: (_) =>
-                                    setState(() => _selectedSound = sound),
-                              );
-                            }).toList(),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    Divider(height: 1, color: colors.cardBorder),
-
-                    // Repeat Days
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
-                        vertical: 16.h,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.repeat_rounded,
-                                color: colors.primary,
-                                size: 20.r,
-                              ),
-                              SizedBox(width: 8.w),
-                              Text(
-                                'Takrorlanish kunlari',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: colors.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 12.h),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              _weekdayCircle('Du', 1, colors),
-                              _weekdayCircle('Se', 2, colors),
-                              _weekdayCircle('Chor', 3, colors),
-                              _weekdayCircle('Pay', 4, colors),
-                              _weekdayCircle('Jum', 5, colors),
-                              _weekdayCircle('Shan', 6, colors),
-                              _weekdayCircle('Yak', 7, colors),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    Divider(height: 1, color: colors.cardBorder),
-
-                    // Solar Rays Mission Switch
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 8.h,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.wb_sunny_rounded,
-                            color: Colors.amber,
-                            size: 22.r,
-                          ),
-                          SizedBox(width: 12.w),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Quyosh nurlari missiyasi',
-                                  style: TextStyle(
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: colors.textPrimary,
-                                  ),
-                                ),
-                                Text(
-                                  'Uyg\'onish uchun ekrandagi quyoshga 5 marta teginiladi',
-                                  style: TextStyle(
-                                    fontSize: 11.sp,
-                                    color: colors.textMuted,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Switch.adaptive(
-                            value: _requireMath,
-                            activeTrackColor: Colors.amber.withValues(
-                              alpha: 0.5,
-                            ),
-                            activeThumbColor: Colors.amber,
-                            onChanged: (v) => setState(() => _requireMath = v),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    Divider(height: 1, color: colors.cardBorder),
-
-                    // Vibrate Switch
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 8.h,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.vibration_rounded,
-                            color: colors.primary,
-                            size: 22.r,
-                          ),
-                          SizedBox(width: 12.w),
-                          Expanded(
-                            child: Text(
-                              'Tebranish (Vibratsiya)',
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                color: colors.textPrimary,
-                              ),
-                            ),
-                          ),
-                          Switch.adaptive(
-                            value: _vibrate,
-                            activeTrackColor: colors.primary.withValues(
-                              alpha: 0.5,
-                            ),
-                            activeThumbColor: colors.primary,
-                            onChanged: (v) => setState(() => _vibrate = v),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 20.h),
-
-              // Save CTA Button
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  foregroundColor: colors.onPrimary,
-                  minimumSize: Size.fromHeight(50.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14.r),
-                  ),
-                ),
-                onPressed: _isSaving ? null : _save,
-                child: Text(
-                  'Budilnikni Saqlash',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-
-              // Delete button if editing
-              if (isEditing) ...[
-                SizedBox(height: 12.h),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.redAccent,
-                    side: const BorderSide(color: Colors.redAccent),
-                    minimumSize: Size.fromHeight(48.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
-                  ),
-                  icon: Icon(Icons.delete_outline_rounded, size: 20.r),
-                  label: Text(
-                    'Budilnikni O\'chirish',
-                    style: TextStyle(fontSize: 14.sp),
-                  ),
-                  onPressed: _delete,
-                ),
-              ],
-
-              SizedBox(height: 24.h),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _segmentedTab({
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-    required AppColors colors,
-  }) {
-    return Semantics(
-      button: true,
-      selected: isSelected,
-      label: label,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          constraints: BoxConstraints(minHeight: 48.h),
-          padding: EdgeInsets.symmetric(vertical: 10.h),
-          decoration: BoxDecoration(
-            color: isSelected ? colors.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(10.r),
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.bold,
-                color: isSelected ? colors.onPrimary : colors.textPrimary,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimeCard(AppColors colors) {
-    return InkWell(
-      onTap: () async {
-        final picked = await showTimePicker(
-          context: context,
-          initialTime: _selectedTime,
-        );
-        if (picked != null) {
-          setState(() => _selectedTime = picked);
-        }
-      },
-      borderRadius: BorderRadius.circular(16.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 24.h),
-        decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: colors.primary.withValues(alpha: 0.5)),
-        ),
-        child: Column(
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
           children: [
-            Text(
-              '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
-              style: TextStyle(
-                fontSize: 48.sp,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2.0,
-                color: colors.primary,
+            CupertinoSlidingSegmentedControl<int>(
+              groupValue: _modeIndex,
+              backgroundColor: colors.card,
+              thumbColor: context.isDark ? colors.cardBorder : Colors.white,
+              children: {
+                0: _segment('⏰ Aniq Vaqt', colors),
+                1: _segment('☀️ Quyosh / Namoz', colors),
+              },
+              onValueChanged: (v) {
+                if (v != null) setState(() => _modeIndex = v);
+              },
+            ),
+            SizedBox(height: 12.h),
+            _modeIndex == 0 ? _buildTimePicker(colors) : _buildSolar(colors),
+            SizedBox(height: 12.h),
+            _group(colors, [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: TextField(
+                  controller: _labelController,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 15.sp),
+                  decoration: InputDecoration(
+                    hintText: 'Nomi',
+                    hintStyle: TextStyle(color: colors.textMuted),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    filled: false,
+                  ),
+                ),
               ),
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              'Vaqtni o\'zgartirish uchun bosing',
-              style: TextStyle(fontSize: 12.sp, color: colors.textMuted),
-            ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(12.w, 4.h, 12.w, 12.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(
+                    7,
+                    (i) => _weekdayCircle(_dayLetters[i], i + 1, colors),
+                  ),
+                ),
+              ),
+            ]),
+            SizedBox(height: 12.h),
+            _group(colors, [
+              _row(
+                colors,
+                title: 'Ovoz',
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _selectedSound.title,
+                      style: TextStyle(
+                        color: colors.textMuted,
+                        fontSize: 13.sp,
+                      ),
+                    ),
+                    Icon(
+                      CupertinoIcons.chevron_right,
+                      size: 16.r,
+                      color: colors.textMuted,
+                    ),
+                  ],
+                ),
+                onTap: () => _pickSound(colors),
+              ),
+              _row(
+                colors,
+                title: 'Quyosh nurlari missiyasi',
+                subtitle: 'O\'chirish uchun quyoshga 5 marta teging',
+                trailing: CupertinoSwitch(
+                  value: _requireMath,
+                  activeTrackColor: colors.primary,
+                  onChanged: (v) => setState(() => _requireMath = v),
+                ),
+              ),
+              _row(
+                colors,
+                title: 'Tebranish',
+                trailing: CupertinoSwitch(
+                  value: _vibrate,
+                  activeTrackColor: colors.primary,
+                  onChanged: (v) => setState(() => _vibrate = v),
+                ),
+              ),
+            ]),
+            if (isEditing) ...[
+              SizedBox(height: 24.h),
+              CupertinoButton(
+                onPressed: _delete,
+                child: Text(
+                  'Uyg\'otgichni o\'chirish',
+                  style: TextStyle(color: Colors.redAccent, fontSize: 15.sp),
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSolarCard(AppColors colors) {
+  static const _dayLetters = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'];
+
+  Widget _segment(String label, AppColors colors) => Padding(
+    padding: EdgeInsets.symmetric(vertical: 9.h),
+    child: Text(
+      label,
+      style: TextStyle(
+        fontSize: 13.sp,
+        fontWeight: FontWeight.w500,
+        color: colors.textPrimary,
+      ),
+    ),
+  );
+
+  Widget _group(AppColors colors, List<Widget> children) => Container(
+    decoration: BoxDecoration(
+      color: colors.card,
+      borderRadius: BorderRadius.circular(16.r),
+    ),
+    child: Column(
+      children: [
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0)
+            Divider(
+              height: 1,
+              indent: 16.w,
+              color: colors.cardBorder.withValues(alpha: 0.6),
+            ),
+          children[i],
+        ],
+      ],
+    ),
+  );
+
+  Widget _row(
+    AppColors colors, {
+    required String title,
+    String? subtitle,
+    required Widget trailing,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16.w, 10.h, 12.w, 10.h),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  if (subtitle != null)
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: colors.textMuted,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            trailing,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickSound(AppColors colors) async {
+    final sound = await showCupertinoModalPopup<AlarmSoundOption>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: const Text('Ovoz'),
+        actions: AlarmSoundOption.all
+            .map(
+              (o) => CupertinoActionSheetAction(
+                isDefaultAction: o.path == _selectedSound.path,
+                onPressed: () => Navigator.pop(ctx, o),
+                child: Text(o.title),
+              ),
+            )
+            .toList(),
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Bekor'),
+        ),
+      ),
+    );
+    if (sound != null) setState(() => _selectedSound = sound);
+  }
+
+  Widget _buildTimePicker(AppColors colors) {
+    final now = DateTime.now();
     return Container(
-      padding: EdgeInsets.all(16.w),
+      height: 200.h,
       decoration: BoxDecoration(
         color: colors.card,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: colors.primary.withValues(alpha: 0.5)),
+      ),
+      child: CupertinoTheme(
+        data: CupertinoThemeData(
+          brightness: context.isDark ? Brightness.dark : Brightness.light,
+          textTheme: CupertinoTextThemeData(
+            dateTimePickerTextStyle: TextStyle(
+              fontSize: 30.sp,
+              fontWeight: FontWeight.w300,
+              color: colors.textPrimary,
+            ),
+          ),
+        ),
+        child: CupertinoDatePicker(
+          mode: CupertinoDatePickerMode.time,
+          use24hFormat: true,
+          itemExtent: 44.h,
+          initialDateTime: DateTime(
+            now.year,
+            now.month,
+            now.day,
+            _selectedTime.hour,
+            _selectedTime.minute,
+          ),
+          onDateTimeChanged: (d) =>
+              setState(() => _selectedTime = TimeOfDay.fromDateTime(d)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSolar(AppColors colors) {
+    final name = _solarNameUz(_selectedSolarEvent);
+    final when = _solarOffset < 0
+        ? '${name}dan ${_solarOffset.abs()} daqiqa oldin'
+        : _solarOffset == 0
+        ? '$name vaqtida'
+        : '${name}dan $_solarOffset daqiqa keyin';
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 8.h),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(16.r),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Qaysi vaqtga bog\'laysiz?',
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w600,
-              color: colors.textPrimary,
-            ),
-          ),
-          SizedBox(height: 10.h),
           Wrap(
-            spacing: 8.w,
-            runSpacing: 6.h,
+            spacing: 4.w,
+            runSpacing: 4.h,
             children: [
               _solarOption('fajr', 'Bomdod 🌅', colors),
               _solarOption('sunrise', 'Quyosh ☀️', colors),
@@ -597,23 +424,10 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
               _solarOption('isha', 'Xufton 🌙', colors),
             ],
           ),
-          SizedBox(height: 16.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Siljish (oldin / keyin):',
-                style: TextStyle(fontSize: 12.sp, color: colors.textMuted),
-              ),
-              Text(
-                '${_solarOffset >= 0 ? "+$_solarOffset" : "$_solarOffset"} daqiqa',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: colors.primary,
-                  fontSize: 13.sp,
-                ),
-              ),
-            ],
+          SizedBox(height: 14.h),
+          Text(
+            when,
+            style: TextStyle(fontSize: 14.sp, color: colors.textPrimary),
           ),
           Slider(
             value: _solarOffset.toDouble(),
@@ -622,21 +436,8 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
             divisions: 24,
             activeColor: colors.primary,
             inactiveColor: colors.cardBorder,
+            label: '${_solarOffset >= 0 ? "+" : ""}$_solarOffset daq',
             onChanged: (val) => setState(() => _solarOffset = val.toInt()),
-          ),
-          Center(
-            child: Text(
-              _solarOffset < 0
-                  ? '${_solarNameUz(_selectedSolarEvent)}dan ${_solarOffset.abs()} daqiqa oldin chalinadi'
-                  : (_solarOffset == 0
-                        ? '${_solarNameUz(_selectedSolarEvent)} vaqtida chalinadi'
-                        : '${_solarNameUz(_selectedSolarEvent)}dan $_solarOffset daqiqa keyin chalinadi'),
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: colors.primary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
           ),
         ],
       ),
@@ -645,53 +446,48 @@ class _AddEditAlarmPageState extends State<AddEditAlarmPage> {
 
   Widget _solarOption(String type, String title, AppColors colors) {
     final isSelected = _selectedSolarEvent == type;
-    return ChoiceChip(
-      label: Text(title, style: TextStyle(fontSize: 12.sp)),
-      selected: isSelected,
-      selectedColor: colors.primary,
-      backgroundColor: colors.background,
-      labelStyle: TextStyle(
-        color: isSelected ? colors.onPrimary : colors.textPrimary,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+    return CupertinoButton(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      minimumSize: Size(0, 36.h),
+      borderRadius: BorderRadius.circular(18.r),
+      color: isSelected ? colors.primary.withValues(alpha: 0.15) : null,
+      onPressed: () => setState(() => _selectedSolarEvent = type),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 13.sp,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+          color: isSelected ? colors.primary : colors.textPrimary,
+        ),
       ),
-      onSelected: (_) => setState(() => _selectedSolarEvent = type),
     );
   }
 
   Widget _weekdayCircle(String label, int day, AppColors colors) {
     final isSelected = _repeatDays.contains(day);
     return Semantics(
+      container: true,
       button: true,
       selected: isSelected,
       label: label,
       child: GestureDetector(
-        onTap: () {
-          setState(() {
-            if (isSelected) {
-              _repeatDays.remove(day);
-            } else {
-              _repeatDays.add(day);
-            }
-          });
-        },
+        onTap: () => setState(() {
+          isSelected ? _repeatDays.remove(day) : _repeatDays.add(day);
+        }),
         child: Container(
-          width: 48.w,
-          height: 48.w,
+          width: 38.r,
+          height: 38.r,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected ? colors.primary : colors.background,
             shape: BoxShape.circle,
-            border: Border.all(
-              color: isSelected ? colors.primary : colors.cardBorder,
-            ),
+            color: isSelected ? colors.primary : Colors.transparent,
           ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 11.sp,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? colors.onPrimary : colors.textPrimary,
-              ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              color: isSelected ? colors.onPrimary : colors.textMuted,
             ),
           ),
         ),

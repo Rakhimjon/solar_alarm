@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:solar_alarm/core/theme/app_theme.dart';
+import 'package:solar_alarm/core/widgets/custom_button.dart';
 import 'package:solar_alarm/features/planner/presentation/cubit/planner_cubit.dart';
 
 class AddPlanPage extends StatefulWidget {
@@ -53,7 +55,7 @@ class _AddPlanPageState extends State<AddPlanPage> {
         category: _selectedCategory,
         useTimer: _useTimer,
       );
-      if (mounted && task != null) Navigator.pop(context, task);
+      if (mounted && task != null) context.pop(task);
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -135,7 +137,6 @@ class _AddPlanPageState extends State<AddPlanPage> {
                   decoration: BoxDecoration(
                     color: colors.card,
                     borderRadius: BorderRadius.circular(16.r),
-                    border: Border.all(color: colors.cardBorder),
                   ),
                   child: Material(
                     type: MaterialType.transparency,
@@ -214,37 +215,20 @@ class _AddPlanPageState extends State<AddPlanPage> {
                   ),
                 ],
                 SizedBox(height: 24.h),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: colors.onPrimary,
-                    minimumSize: Size.fromHeight(52.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
+                CustomButton(
+                  title: _useTimer
+                      ? 'Saqlash va Fokusga o\'tish'
+                      : 'Rejani saqlash',
+                  icon: Icon(
+                    _useTimer
+                        ? Icons.hourglass_top_rounded
+                        : Icons.playlist_add_check_rounded,
                   ),
-                  onPressed: _isSaving ? null : _save,
-                  icon: _isSaving
-                      ? SizedBox(
-                          width: 18.r,
-                          height: 18.r,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: colors.onPrimary,
-                          ),
-                        )
-                      : Icon(
-                          _useTimer
-                              ? Icons.hourglass_top_rounded
-                              : Icons.playlist_add_check_rounded,
-                        ),
-                  label: Text(
-                    _useTimer ? 'Saqlash va Fokusga o\'tish' : 'Rejani saqlash',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  isFullWidth: true,
+                  isLoading: _isSaving,
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
+                  onTap: _save,
                 ),
               ],
             ),

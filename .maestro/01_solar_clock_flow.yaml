@@ -1,4 +1,4 @@
-appId: com.example.solar_alarm
+appId: com.example.solarAlarm
 ---
 # Flow 1: Launch and verify Solar & Prayer times
 - launchApp:

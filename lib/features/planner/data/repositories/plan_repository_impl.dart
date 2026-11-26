@@ -51,7 +51,9 @@ class PlanRepositoryImpl implements PlanRepository {
       final newCompleted = current.completedMinutes + minutes;
       tasks[index] = current.copyWith(
         completedMinutes: newCompleted,
-        isCompleted: newCompleted >= current.targetMinutes ? true : current.isCompleted,
+        isCompleted: newCompleted >= current.targetMinutes
+            ? true
+            : current.isCompleted,
       );
       await localDataSource.saveTasks(tasks);
     }

@@ -1,5 +1,7 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_theme.dart';
 
 class HourglassWidget extends StatefulWidget {
@@ -51,12 +53,15 @@ class _HourglassWidgetState extends State<HourglassWidget>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
       if (_animController.isAnimating) {
         _animController.stop();
       }
     } else if (state == AppLifecycleState.resumed) {
-      if (widget.isRunning && widget.progress < 0.999 && !_animController.isAnimating) {
+      if (widget.isRunning &&
+          widget.progress < 0.999 &&
+          !_animController.isAnimating) {
         _animController.repeat();
       }
     }
@@ -71,7 +76,8 @@ class _HourglassWidgetState extends State<HourglassWidget>
 
   @override
   Widget build(BuildContext context) {
-    final effectiveGlassColor = widget.glassColor ?? context.appColors.glassStroke;
+    final effectiveGlassColor =
+        widget.glassColor ?? context.appColors.glassStroke;
     final isDark = context.isDark;
 
     return SizedBox(
@@ -206,7 +212,14 @@ class _HourglassPainter extends CustomPainter {
     // Upper bulb to waist
     path.cubicTo(w * 0.23, cy * 0.65, cx - 11, cy - 8, cx - 7, cy);
     // Waist to lower bulb
-    path.cubicTo(cx - 11, cy + 8, w * 0.23, h - (cy * 0.65), w * 0.22, h * 0.90);
+    path.cubicTo(
+      cx - 11,
+      cy + 8,
+      w * 0.23,
+      h - (cy * 0.65),
+      w * 0.22,
+      h * 0.90,
+    );
     path.lineTo(w * 0.78, h * 0.90);
     // Lower bulb right side to waist
     path.cubicTo(w * 0.77, h - (cy * 0.65), cx + 11, cy + 8, cx + 7, cy);
@@ -219,7 +232,9 @@ class _HourglassPainter extends CustomPainter {
 
   void _drawCaps(Canvas canvas, double w, double h) {
     final capColor = isDark ? const Color(0xFF263244) : const Color(0xFFCBD5E1);
-    final capHighlight = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    final capHighlight = isDark
+        ? const Color(0xFF334155)
+        : const Color(0xFFE2E8F0);
 
     _capPaint.color = capColor;
     _highlightPaint.color = capHighlight;
@@ -277,7 +292,9 @@ class _HourglassPainter extends CustomPainter {
     canvas.drawPath(path, _sandTopPaint);
 
     // Subtle dark line inside funnel to show depth
-    _rimPaint.color = const Color(0x59FF8F00); // amber.shade800 with 0.35 opacity
+    _rimPaint.color = const Color(
+      0x59FF8F00,
+    ); // amber.shade800 with 0.35 opacity
     final rimPath = Path();
     rimPath.moveTo(w * 0.15, sandTopY);
     rimPath.quadraticBezierTo(cx, sandTopY + funnelDepth, w * 0.85, sandTopY);
@@ -319,23 +336,9 @@ class _HourglassPainter extends CustomPainter {
     path.lineTo(w * 0.10, baseY);
 
     // Left slope up to dune peak
-    path.cubicTo(
-      cx - 18,
-      baseY - 2,
-      cx - 8,
-      peakY,
-      cx,
-      peakY,
-    );
+    path.cubicTo(cx - 18, baseY - 2, cx - 8, peakY, cx, peakY);
     // Right slope down from dune peak
-    path.cubicTo(
-      cx + 8,
-      peakY,
-      cx + 18,
-      baseY - 2,
-      w * 0.90,
-      baseY,
-    );
+    path.cubicTo(cx + 8, peakY, cx + 18, baseY - 2, w * 0.90, baseY);
 
     path.lineTo(w * 0.90, h * 0.92);
     path.close();
@@ -343,7 +346,9 @@ class _HourglassPainter extends CustomPainter {
     canvas.drawPath(path, _sandBottomPaint);
 
     // Subtle highlight on the mound peak ridge
-    _ridgePaint.color = const Color(0x99FFE082); // amber.shade200 with 0.6 opacity
+    _ridgePaint.color = const Color(
+      0x99FFE082,
+    ); // amber.shade200 with 0.6 opacity
     final ridgePath = Path();
     ridgePath.moveTo(cx - 12, peakY + 3);
     ridgePath.quadraticBezierTo(cx, peakY, cx + 12, peakY + 3);
@@ -378,7 +383,9 @@ class _HourglassPainter extends CustomPainter {
       final px = cx + math.sin(i * 4.3 + animValue * 22) * 1.3;
 
       final isAccent = (i % 3 == 0);
-      _grainPaint.color = isAccent ? const Color(0xFFFFF9C4) : const Color(0xFFFFCA28);
+      _grainPaint.color = isAccent
+          ? const Color(0xFFFFF9C4)
+          : const Color(0xFFFFCA28);
       final radius = isAccent ? 1.5 : 1.1;
 
       canvas.drawCircle(Offset(px, py), radius, _grainPaint);
@@ -392,7 +399,10 @@ class _HourglassPainter extends CustomPainter {
       final dist = splashT * 12.0;
 
       final sx = cx + dir * math.cos(angle) * dist;
-      final sy = bottomPeakY - math.sin(angle) * dist * 0.6 + (splashT * splashT * 4.5);
+      final sy =
+          bottomPeakY -
+          math.sin(angle) * dist * 0.6 +
+          (splashT * splashT * 4.5);
       final alpha = ((1.0 - splashT) * 0.85).clamp(0.0, 1.0);
 
       _splashPaint.color = const Color(0xFFFFE082).withValues(alpha: alpha);
@@ -420,7 +430,14 @@ class _HourglassPainter extends CustomPainter {
     // Specular curved streak on lower-left bulb
     final lowerPath = Path();
     lowerPath.moveTo(cx - 12, cy + 10);
-    lowerPath.cubicTo(cx - 14, cy + 14, w * 0.26, h - (cy * 0.60), w * 0.26, h * 0.86);
+    lowerPath.cubicTo(
+      cx - 14,
+      cy + 14,
+      w * 0.26,
+      h - (cy * 0.60),
+      w * 0.26,
+      h * 0.86,
+    );
     canvas.drawPath(lowerPath, _reflectPaint);
   }
 

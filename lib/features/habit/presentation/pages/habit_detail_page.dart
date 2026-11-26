@@ -1,12 +1,13 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import 'package:solar_alarm/core/router/path.dart';
 import 'package:solar_alarm/core/theme/app_theme.dart';
 import 'package:solar_alarm/features/habit/domain/entities/habit.dart';
 import 'package:solar_alarm/features/habit/presentation/cubit/habit_cubit.dart';
 import 'package:solar_alarm/features/habit/presentation/cubit/habit_state.dart';
-
-import 'add_habit_page.dart';
 
 class HabitDetailPage extends StatelessWidget {
   final Habit habit;
@@ -26,15 +27,23 @@ class HabitDetailPage extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.edit_rounded, color: colors.primary),
             tooltip: 'Tahrirlash',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => AddHabitPage(initialHabit: habit),
-              ),
+            onPressed: () => context.push(
+              RoutePath.addHabit,
+              extra:
+                  context
+                      .read<HabitCubit>()
+                      .state
+                      .habits
+                      .where((h) => h.id == habit.id)
+                      .firstOrNull ??
+                  habit,
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline_rounded,
-                color: Colors.redAccent),
+            icon: const Icon(
+              Icons.delete_outline_rounded,
+              color: Colors.redAccent,
+            ),
             tooltip: 'O\'chirish',
             onPressed: () => _confirmDelete(context),
           ),
@@ -55,7 +64,6 @@ class HabitDetailPage extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: colors.card,
                     borderRadius: BorderRadius.circular(20.r),
-                    border: Border.all(color: colors.cardBorder),
                   ),
                   child: Column(
                     children: [
@@ -125,7 +133,7 @@ class HabitDetailPage extends StatelessWidget {
                 ),
                 SizedBox(height: 20.h),
                 Text(
-                  'So\'nggi 12 hafta',
+                  'Kalendar',
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.bold,
@@ -133,7 +141,7 @@ class HabitDetailPage extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 10.h),
-                _Heatmap(
+                _MonthCalendar(
                   habit: current,
                   habitColor: habitColor,
                   today: today,
@@ -146,12 +154,7 @@ class HabitDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _stat(
-    String value,
-    String label,
-    Color accent,
-    AppColors colors,
-  ) {
+  Widget _stat(String value, String label, Color accent, AppColors colors) {
     return Expanded(
       child: Column(
         children: [
@@ -200,113 +203,197 @@ class HabitDetailPage extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('O\'chirish', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'O\'chirish',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
     );
     if (confirmed == true && context.mounted) {
       await context.read<HabitCubit>().deleteHabit(habit.id);
-      if (context.mounted) Navigator.pop(context);
+      if (context.mounted) context.pop();
     }
   }
 }
 
-class _Heatmap extends StatelessWidget {
+/// Month grid. Tap a past/today scheduled day (since creation) to toggle it.
+class _MonthCalendar extends StatefulWidget {
   final Habit habit;
   final Color habitColor;
   final DateTime today;
 
-  const _Heatmap({
+  const _MonthCalendar({
     required this.habit,
     required this.habitColor,
     required this.today,
   });
 
-  static const _weekdayLabels = ['Du', 'Se', 'Chor', 'Pay', 'Jum', 'Shan', 'Yak'];
+  @override
+  State<_MonthCalendar> createState() => _MonthCalendarState();
+}
+
+class _MonthCalendarState extends State<_MonthCalendar> {
+  static const _weekdayLabels = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'];
+  static const _months = [
+    'Yanvar',
+    'Fevral',
+    'Mart',
+    'Aprel',
+    'May',
+    'Iyun',
+    'Iyul',
+    'Avgust',
+    'Sentabr',
+    'Oktabr',
+    'Noyabr',
+    'Dekabr',
+  ];
+
+  late DateTime _month = DateTime(widget.today.year, widget.today.month);
+
+  bool get _isCurrentMonth =>
+      _month.year == widget.today.year && _month.month == widget.today.month;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final grid = _buildGrid(today);
+    final daysInMonth = DateTime(_month.year, _month.month + 1, 0).day;
+    final leading = _month.weekday - 1; // empty cells before day 1
+    final rows = ((leading + daysInMonth) / 7).ceil();
 
     return Container(
-      padding: EdgeInsets.all(12.r),
+      padding: EdgeInsets.fromLTRB(8.w, 4.h, 8.w, 12.h),
       decoration: BoxDecoration(
         color: colors.card,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: colors.cardBorder),
       ),
       child: Column(
-        children: List.generate(7, (day) {
-          return Padding(
-            padding: EdgeInsets.symmetric(vertical: 2.h),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 34.w,
-                  child: Text(
-                    _weekdayLabels[day],
-                    style: TextStyle(
-                      fontSize: 10.sp,
-                      color: colors.textMuted,
+        children: [
+          Row(
+            children: [
+              CupertinoButton(
+                padding: EdgeInsets.all(8.r),
+                onPressed: () => setState(
+                  () => _month = DateTime(_month.year, _month.month - 1),
+                ),
+                child: Icon(
+                  CupertinoIcons.chevron_left,
+                  size: 18.r,
+                  color: colors.textMuted,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  '${_months[_month.month - 1]} ${_month.year}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              CupertinoButton(
+                padding: EdgeInsets.all(8.r),
+                onPressed: _isCurrentMonth
+                    ? null
+                    : () => setState(
+                        () => _month = DateTime(_month.year, _month.month + 1),
+                      ),
+                child: Icon(
+                  CupertinoIcons.chevron_right,
+                  size: 18.r,
+                  color: _isCurrentMonth ? colors.cardBorder : colors.textMuted,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 4.h),
+          Row(
+            children: _weekdayLabels
+                .map(
+                  (label) => Expanded(
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: colors.textMuted,
+                        fontSize: 11.sp,
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: List.generate(12, (week) {
-                      final date = grid[day][week];
-                      return _cell(date, colors);
-                    }),
+                )
+                .toList(),
+          ),
+          SizedBox(height: 6.h),
+          for (var r = 0; r < rows; r++)
+            Row(
+              children: List.generate(7, (c) {
+                final dayNumber = r * 7 + c - leading + 1;
+                if (dayNumber < 1 || dayNumber > daysInMonth) {
+                  return const Expanded(child: SizedBox());
+                }
+                return Expanded(
+                  child: _dayCell(
+                    DateTime(_month.year, _month.month, dayNumber),
+                    colors,
                   ),
-                ),
-              ],
+                );
+              }),
             ),
-          );
-        }),
+        ],
       ),
     );
   }
 
-  Widget _cell(DateTime date, AppColors colors) {
-    final isFuture = date.isAfter(today);
-    final isDone = habit.isDoneOn(date);
+  Widget _dayCell(DateTime date, AppColors colors) {
+    final habit = widget.habit;
+    final isFuture = date.isAfter(widget.today);
+    final isBeforeStart = date.isBefore(_dateOnly(habit.createdAt));
     final isScheduled = habit.isScheduledOn(date);
-    final isToday = date == today;
+    final isDone = habit.isDoneOn(date);
+    final isToday = date == widget.today;
+    final canToggle = isScheduled && !isFuture && !isBeforeStart;
 
-    Color bg;
-    if (isDone) {
-      bg = habitColor;
-    } else if (isScheduled && !isFuture) {
-      bg = colors.cardBorder;
-    } else {
-      bg = Colors.transparent;
-    }
+    final textColor = isDone
+        ? Colors.white
+        : !isScheduled || isFuture || isBeforeStart
+        ? colors.textMuted.withValues(alpha: 0.45)
+        : colors.textPrimary;
 
-    return Container(
-      width: 16.r,
-      height: 16.r,
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(4.r),
-        border: isToday
-            ? Border.all(color: habitColor, width: 1.5)
-            : null,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: canToggle
+          ? () => context.read<HabitCubit>().toggleDate(habit.id, date)
+          : null,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 3.h),
+        child: Center(
+          child: Container(
+            width: 36.r,
+            height: 36.r,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isDone ? widget.habitColor : Colors.transparent,
+              border: isToday && !isDone
+                  ? Border.all(color: widget.habitColor, width: 1.5)
+                  : null,
+            ),
+            child: Text(
+              '${date.day}',
+              style: TextStyle(
+                color: textColor,
+                fontSize: 13.sp,
+                fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
       ),
     );
-  }
-
-  List<List<DateTime>> _buildGrid(DateTime today) {
-    final t = _dateOnly(today);
-    final monday = t.subtract(Duration(days: t.weekday - 1));
-    final startMonday = monday.subtract(const Duration(days: (12 - 1) * 7));
-    return List.generate(7, (day) {
-      return List.generate(12, (week) {
-        return startMonday.add(Duration(days: week * 7 + day));
-      });
-    });
   }
 }
 

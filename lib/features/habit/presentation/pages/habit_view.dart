@@ -1,17 +1,29 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import 'package:solar_alarm/core/router/path.dart';
 import 'package:solar_alarm/core/theme/app_theme.dart';
 import 'package:solar_alarm/core/theme/theme_cubit.dart';
+import 'package:solar_alarm/core/widgets/custom_button.dart';
 import 'package:solar_alarm/features/habit/domain/entities/habit.dart';
 import 'package:solar_alarm/features/habit/presentation/cubit/habit_cubit.dart';
 import 'package:solar_alarm/features/habit/presentation/cubit/habit_state.dart';
 
-import 'add_habit_page.dart';
-import 'habit_detail_page.dart';
+const _weekdayLabels = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'];
 
-class HabitView extends StatelessWidget {
+DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+class HabitView extends StatefulWidget {
   const HabitView({super.key});
+
+  @override
+  State<HabitView> createState() => _HabitViewState();
+}
+
+class _HabitViewState extends State<HabitView> {
+  late DateTime _selected = _dateOnly(DateTime.now());
 
   @override
   Widget build(BuildContext context) {
@@ -20,11 +32,10 @@ class HabitView extends StatelessWidget {
     return BlocBuilder<HabitCubit, HabitState>(
       builder: (context, state) {
         final cubit = context.read<HabitCubit>();
-        final today = DateTime.now();
-        final todayHabits =
-            state.habits.where((h) => h.isScheduledOn(today)).toList();
-        final doneToday =
-            todayHabits.where((h) => h.isDoneOn(today)).length;
+        final dayHabits = state.habits
+            .where((h) => h.isScheduledOn(_selected))
+            .toList();
+        final done = dayHabits.where((h) => h.isDoneOn(_selected)).length;
 
         return Scaffold(
           appBar: AppBar(
@@ -44,34 +55,56 @@ class HabitView extends StatelessWidget {
           ),
           body: Column(
             children: [
+              _WeekStrip(
+                selected: _selected,
+                habits: state.habits,
+                onSelect: (day) => setState(() => _selected = day),
+              ),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                child: _HeroCard(
-                  done: doneToday,
-                  total: todayHabits.length,
+                padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 8.h),
+                child: Row(
+                  children: [
+                    Text(
+                      _dayTitle(_selected),
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (dayHabits.isNotEmpty)
+                      Text(
+                        '$done/${dayHabits.length}',
+                        style: TextStyle(
+                          color: colors.textMuted,
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                  ],
                 ),
               ),
               Expanded(
-                child: state.status == HabitStatus.loading &&
-                        state.habits.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
+                child:
+                    state.status == HabitStatus.loading && state.habits.isEmpty
+                    ? const Center(child: CupertinoActivityIndicator())
                     : state.habits.isEmpty
-                    ? _EmptyState()
+                    ? const _EmptyState()
                     : ListView.separated(
-                        padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 88.h),
+                        padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 96.h),
                         itemCount: state.habits.length,
-                        separatorBuilder: (_, _) => SizedBox(height: 10.h),
+                        separatorBuilder: (_, _) => SizedBox(height: 8.h),
                         itemBuilder: (context, index) {
                           final habit = state.habits[index];
-                          return _HabitCard(
+                          return _HabitRow(
                             habit: habit,
-                            today: today,
-                            onToggle: () => cubit.toggleToday(habit.id),
-                            onOpen: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    HabitDetailPage(habit: habit),
-                              ),
+                            day: _selected,
+                            onToggle: () =>
+                                cubit.toggleDate(habit.id, _selected),
+                            onOpen: () => context.push(
+                              RoutePath.habitDetail,
+                              extra: habit,
                             ),
                           );
                         },
@@ -79,105 +112,193 @@ class HabitView extends StatelessWidget {
               ),
             ],
           ),
-          floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: colors.primary,
-            foregroundColor: colors.onPrimary,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const AddHabitPage()),
-            ),
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Yangi Odat'),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerFloat,
+          floatingActionButton: CustomButton(
+            title: 'Yangi Odat',
+            icon: const Icon(CupertinoIcons.add),
+            borderRadius: 28.r,
+            onTap: () => context.push(RoutePath.addHabit),
           ),
         );
       },
     );
   }
+
+  String _dayTitle(DateTime day) {
+    final today = _dateOnly(DateTime.now());
+    if (day == today) return 'Bugun';
+    if (day == today.subtract(const Duration(days: 1))) return 'Kecha';
+    const months = [
+      'yanvar',
+      'fevral',
+      'mart',
+      'aprel',
+      'may',
+      'iyun',
+      'iyul',
+      'avgust',
+      'sentabr',
+      'oktabr',
+      'noyabr',
+      'dekabr',
+    ];
+    return '${day.day}-${months[day.month - 1]}';
+  }
 }
 
-class _HeroCard extends StatelessWidget {
-  final int done;
-  final int total;
+/// Week calendar: swipe-free, chevrons move by week. Future days are locked.
+class _WeekStrip extends StatefulWidget {
+  final DateTime selected;
+  final List<Habit> habits;
+  final ValueChanged<DateTime> onSelect;
 
-  const _HeroCard({required this.done, required this.total});
+  const _WeekStrip({
+    required this.selected,
+    required this.habits,
+    required this.onSelect,
+  });
+
+  @override
+  State<_WeekStrip> createState() => _WeekStripState();
+}
+
+class _WeekStripState extends State<_WeekStrip> {
+  int _weekOffset = 0; // 0 = this week, -1 = previous week, ...
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final progress = total == 0 ? 0.0 : done / total;
-    final message = total == 0
-        ? 'Bugun rejalashtirilgan odat yo\'q'
-        : done == total
-        ? 'Ajoyib! Bugungi barcha odatlar bajarildi!'
-        : 'Bugungi odatlarga qadam-baqadam!';
+    final today = _dateOnly(DateTime.now());
+    final monday = today
+        .subtract(Duration(days: today.weekday - 1))
+        .add(Duration(days: _weekOffset * 7));
 
-    return Container(
-      padding: EdgeInsets.all(16.r),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: colors.cardBorder),
-      ),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4.w),
       child: Row(
         children: [
-          SizedBox(
-            width: 64.r,
-            height: 64.r,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularProgressIndicator(
-                  value: progress,
-                  strokeWidth: 6.r,
-                  backgroundColor: colors.cardBorder,
-                  valueColor: AlwaysStoppedAnimation(colors.primary),
-                ),
-                Text(
-                  '${(progress * 100).round()}%',
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+          _chevron(CupertinoIcons.chevron_left, colors, () {
+            setState(() => _weekOffset--);
+          }),
+          Expanded(
+            child: Row(
+              children: List.generate(7, (i) {
+                final day = monday.add(Duration(days: i));
+                return Expanded(child: _dayCell(day, today, colors));
+              }),
             ),
           ),
-          SizedBox(width: 16.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  message,
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                Text(
-                  '$done/$total bajarildi',
-                  style: TextStyle(color: colors.textMuted, fontSize: 11.sp),
-                ),
-              ],
-            ),
+          _chevron(
+            CupertinoIcons.chevron_right,
+            colors,
+            _weekOffset < 0 ? () => setState(() => _weekOffset++) : null,
           ),
         ],
       ),
     );
   }
+
+  Widget _chevron(IconData icon, AppColors colors, VoidCallback? onTap) {
+    return CupertinoButton(
+      padding: EdgeInsets.all(6.r),
+      minimumSize: Size(32.r, 44.r),
+      onPressed: onTap,
+      child: Icon(
+        icon,
+        size: 18.r,
+        color: onTap == null ? colors.cardBorder : colors.textMuted,
+      ),
+    );
+  }
+
+  Widget _dayCell(DateTime day, DateTime today, AppColors colors) {
+    final isFuture = day.isAfter(today);
+    final isSelected = day == widget.selected;
+    final isToday = day == today;
+    final scheduled = widget.habits.where((h) => h.isScheduledOn(day));
+    final progress = scheduled.isEmpty || isFuture
+        ? 0.0
+        : scheduled.where((h) => h.isDoneOn(day)).length / scheduled.length;
+
+    final numberColor = isSelected
+        ? colors.onPrimary
+        : isFuture
+        ? colors.textMuted.withValues(alpha: 0.5)
+        : isToday
+        ? colors.primary
+        : colors.textPrimary;
+
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      button: true,
+      selected: isSelected,
+      label: '${day.day}-kun',
+      onTap: isFuture ? null : () => widget.onSelect(day),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: isFuture ? null : () => widget.onSelect(day),
+        child: Column(
+          children: [
+            Text(
+              _weekdayLabels[day.weekday - 1],
+              style: TextStyle(color: colors.textMuted, fontSize: 11.sp),
+            ),
+            SizedBox(height: 6.h),
+            SizedBox(
+              width: 38.r,
+              height: 38.r,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Thin ring = share of that day's habits done.
+                  CircularProgressIndicator(
+                    value: progress,
+                    strokeWidth: 2.5,
+                    backgroundColor: isFuture
+                        ? Colors.transparent
+                        : colors.cardBorder,
+                    valueColor: AlwaysStoppedAnimation(colors.primary),
+                  ),
+                  Container(
+                    width: 30.r,
+                    height: 30.r,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isSelected ? colors.primary : Colors.transparent,
+                    ),
+                    child: Text(
+                      '${day.day}',
+                      style: TextStyle(
+                        color: numberColor,
+                        fontSize: 13.sp,
+                        fontWeight: isSelected || isToday
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class _HabitCard extends StatelessWidget {
+class _HabitRow extends StatelessWidget {
   final Habit habit;
-  final DateTime today;
+  final DateTime day;
   final VoidCallback onToggle;
   final VoidCallback onOpen;
 
-  const _HabitCard({
+  const _HabitRow({
     required this.habit,
-    required this.today,
+    required this.day,
     required this.onToggle,
     required this.onOpen,
   });
@@ -186,125 +307,87 @@ class _HabitCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.appColors;
     final habitColor = Color(habit.colorValue);
-    final isDoneToday = habit.isDoneOn(today);
-    final isScheduledToday = habit.isScheduledOn(today);
-    final streak = habit.currentStreak(today);
+    final isDone = habit.isDoneOn(day);
+    final isScheduled = habit.isScheduledOn(day);
+    final streak = habit.currentStreak();
 
-    return Container(
-      decoration: BoxDecoration(
+    return Opacity(
+      opacity: isScheduled ? 1 : 0.45,
+      child: Material(
         color: colors.card,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: isDoneToday ? habitColor : colors.cardBorder,
-          width: isDoneToday ? 1.5 : 1,
-        ),
-      ),
-      child: InkWell(
-        onTap: onOpen,
-        borderRadius: BorderRadius.circular(16.r),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-          child: Row(
-            children: [
-              Container(
-                width: 46.r,
-                height: 46.r,
-                decoration: BoxDecoration(
-                  color: habitColor.withValues(alpha: 0.18),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(habit.emoji, style: TextStyle(fontSize: 24.sp)),
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      habit.name,
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Row(
-                      children: [
-                        Text(
-                          habit.scheduleText,
-                          style: TextStyle(
-                            color: colors.textMuted,
-                            fontSize: 11.sp,
-                          ),
-                        ),
-                        if (streak > 0) ...[
-                          SizedBox(width: 8.w),
-                          Text(
-                            '🔥 $streak',
-                            style: TextStyle(
-                              color: habitColor,
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 8.w),
-              if (isScheduledToday)
-                Semantics(
-                  button: true,
-                  checked: isDoneToday,
-                  label: '${habit.name}: bugun bajarildi deb belgilash',
-                  child: InkWell(
-                    onTap: onToggle,
-                    customBorder: const CircleBorder(),
-                    child: SizedBox(
-                      width: 44.r,
-                      height: 44.r,
-                      child: Center(
-                        child: Container(
-                          width: 28.r,
-                          height: 28.r,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isDoneToday ? habitColor : Colors.transparent,
-                            border: Border.all(
-                              color: isDoneToday
-                                  ? habitColor
-                                  : colors.textMuted,
-                              width: 2,
-                            ),
-                          ),
-                          child: isDoneToday
-                              ? const Icon(
-                                  Icons.check_rounded,
-                                  size: 18,
-                                  color: Colors.white,
-                                )
-                              : null,
+        child: InkWell(
+          onTap: onOpen,
+          borderRadius: BorderRadius.circular(16.r),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(14.w, 10.h, 6.w, 10.h),
+            child: Row(
+              children: [
+                Text(habit.emoji, style: TextStyle(fontSize: 24.sp)),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        habit.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ),
-                  ),
-                )
-              else
-                Container(
-                  width: 44.r,
-                  height: 44.r,
-                  alignment: Alignment.center,
-                  child: Text(
-                    '—',
-                    style: TextStyle(color: colors.textMuted, fontSize: 16.sp),
+                      SizedBox(height: 2.h),
+                      Text(
+                        streak > 0
+                            ? '🔥 $streak kun · ${habit.scheduleText}'
+                            : habit.scheduleText,
+                        style: TextStyle(
+                          color: colors.textMuted,
+                          fontSize: 12.sp,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-            ],
+                if (isScheduled)
+                  Semantics(
+                    container: true,
+                    button: true,
+                    checked: isDone,
+                    label: '${habit.name}: bajarildi deb belgilash',
+                    child: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size(44.r, 44.r),
+                      onPressed: onToggle,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: 28.r,
+                        height: 28.r,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isDone ? habitColor : Colors.transparent,
+                          border: Border.all(
+                            color: isDone ? habitColor : colors.cardBorder,
+                            width: 2,
+                          ),
+                        ),
+                        child: isDone
+                            ? Icon(
+                                Icons.check_rounded,
+                                size: 18.r,
+                                color: Colors.white,
+                              )
+                            : null,
+                      ),
+                    ),
+                  )
+                else
+                  SizedBox(width: 44.r),
+              ],
+            ),
           ),
         ),
       ),
@@ -313,6 +396,8 @@ class _HabitCard extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
@@ -322,18 +407,14 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.repeat_rounded,
-              size: 56.r,
-              color: colors.textMuted,
-            ),
+            Text('🌱', style: TextStyle(fontSize: 44.sp)),
             SizedBox(height: 12.h),
             Text(
               'Hozircha odatlar yo\'q',
               style: TextStyle(
                 color: colors.textPrimary,
                 fontSize: 15.sp,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
               ),
             ),
             SizedBox(height: 6.h),

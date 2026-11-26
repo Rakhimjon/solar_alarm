@@ -1,4 +1,4 @@
-appId: com.example.solar_alarm
+appId: com.example.solarAlarm
 ---
 - env:
-    APP_ID: com.example.solar_alarm
+    APP_ID: com.example.solarAlarm

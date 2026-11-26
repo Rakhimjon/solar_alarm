@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/theme_cubit.dart';
+import '../../../../core/widgets/custom_button.dart';
 import '../../data/datasources/prayer_times_remote_datasource.dart';
 import '../../domain/entities/solar_time_item.dart';
 import '../cubit/solar_clock_cubit.dart';
@@ -191,7 +192,6 @@ class SolarClockView extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: colors.card,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: colors.cardBorder),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -259,10 +259,9 @@ class SolarClockView extends StatelessWidget {
                             )
                           : colors.card,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isNext ? colors.primary : colors.cardBorder,
-                        width: isNext ? 1.5 : 1,
-                      ),
+                      border: isNext
+                          ? Border.all(color: colors.primary, width: 1.5)
+                          : null,
                     ),
                     child: Row(
                       children: [
@@ -373,23 +372,16 @@ class SolarClockView extends StatelessWidget {
                     onChanged: (val) => cubit.setOffset(val.toInt()),
                   ),
                   const SizedBox(height: 14),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: sheetColors.primary,
-                      foregroundColor: colors.onPrimary,
-                      minimumSize: const Size.fromHeight(48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () {
+                  CustomButton(
+                    title: 'Budilnikni Yoqish',
+                    isFullWidth: true,
+                    borderRadius: 12,
+                    backgroundColor: sheetColors.primary,
+                    foregroundColor: colors.onPrimary,
+                    onTap: () {
                       cubit.scheduleAlarm();
                       Navigator.pop(sheetContext);
                     },
-                    child: const Text(
-                      'Budilnikni Yoqish',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
                   ),
                   const SizedBox(height: 8),
                   TextButton(

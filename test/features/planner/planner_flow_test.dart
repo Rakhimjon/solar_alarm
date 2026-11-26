@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:solar_alarm/core/router/path.dart';
 import 'package:solar_alarm/core/services/kiosk_service.dart';
 import 'package:solar_alarm/features/focus_timer/presentation/cubit/focus_timer_cubit.dart';
 import 'package:solar_alarm/features/planner/domain/entities/plan_task.dart';
 import 'package:solar_alarm/features/planner/domain/repositories/plan_repository.dart';
 import 'package:solar_alarm/features/planner/presentation/cubit/planner_cubit.dart';
+import 'package:solar_alarm/features/planner/presentation/pages/add_plan_page.dart';
 import 'package:solar_alarm/features/planner/presentation/pages/planner_view.dart';
 
 class MemoryPlanRepository implements PlanRepository {
@@ -62,7 +65,33 @@ void main() {
     plannerCubit.close();
   });
 
-  Future<void> pumpPlanner(WidgetTester tester, {Function(int)? onSwitchTab}) {
+  late GoRouter router;
+
+  Future<void> pumpPlanner(WidgetTester tester) {
+    router = GoRouter(
+      initialLocation: RoutePath.planner,
+      routes: [
+        GoRoute(
+          path: RoutePath.planner,
+          builder: (_, _) => const PlannerView(),
+        ),
+        GoRoute(
+          path: RoutePath.focus,
+          builder: (_, _) => const Scaffold(body: Text('focus')),
+        ),
+        GoRoute(
+          path: RoutePath.addPlan,
+          builder: (_, state) {
+            final extra = state.extra as Map<String, dynamic>;
+            return AddPlanPage(
+              categories: extra['categories'] as List<String>,
+              initialCategory: extra['initialCategory'] as String,
+            );
+          },
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -74,7 +103,7 @@ void main() {
             BlocProvider.value(value: plannerCubit),
             BlocProvider.value(value: focusTimerCubit),
           ],
-          child: MaterialApp(home: PlannerView(onSwitchTab: onSwitchTab)),
+          child: MaterialApp.router(routerConfig: router),
         ),
       ),
     );
@@ -83,8 +112,7 @@ void main() {
   testWidgets('Timed plan opens Focus Timer attached to the task', (
     tester,
   ) async {
-    int? selectedTab;
-    await pumpPlanner(tester, onSwitchTab: (index) => selectedTab = index);
+    await pumpPlanner(tester);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Yangi Reja'));
@@ -93,15 +121,14 @@ void main() {
     await tester.tap(find.text('Saqlash va Fokusga o\'tish'));
     await tester.pumpAndSettle();
 
-    expect(selectedTab, 1);
+    expect(router.state.uri.path, RoutePath.focus);
     expect(focusTimerCubit.state.activeTaskTitle, 'Kitob o\'qish');
     expect(focusTimerCubit.state.totalSeconds, 25 * 60);
     expect(plannerCubit.state.tasks.single.useTimer, isTrue);
   });
 
   testWidgets('No-timer plan saves without leaving Planner', (tester) async {
-    var navigated = false;
-    await pumpPlanner(tester, onSwitchTab: (_) => navigated = true);
+    await pumpPlanner(tester);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Yangi Reja'));
@@ -114,7 +141,7 @@ void main() {
     await tester.tap(find.text('Rejani saqlash'));
     await tester.pumpAndSettle();
 
-    expect(navigated, isFalse);
+    expect(router.state.uri.path, RoutePath.planner);
     expect(plannerCubit.state.tasks.single.title, 'Oddiy reja');
     expect(plannerCubit.state.tasks.single.useTimer, isFalse);
   });

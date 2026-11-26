@@ -1,8 +1,11 @@
 import 'dart:io';
+
 import 'package:flutter/services.dart';
 
 class KioskService {
-  static const MethodChannel _channel = MethodChannel('com.example.solar_alarm/kiosk');
+  static const MethodChannel _channel = MethodChannel(
+    'com.example.solar_alarm/kiosk',
+  );
 
   Future<bool> startLock() async {
     if (!Platform.isAndroid) return false;

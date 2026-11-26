@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol/patrol.dart';
@@ -43,34 +44,31 @@ void main() {
     },
   );
 
-  patrolTest(
-    "Alarm Create and List Flow",
-    ($) async {
-      WidgetsFlutterBinding.ensureInitialized();
-      await initDi();
-      await $.pumpWidgetAndSettle(const SolarFocusApp());
+  patrolTest("Alarm Create and List Flow", ($) async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await initDi();
+    await $.pumpWidgetAndSettle(const SolarFocusApp());
 
-      // Navigate to Uyg'otgich tab
-      await $("Uyg'otgich").tap();
-      await $.pumpAndSettle();
+    // Navigate to Uyg'otgich tab
+    await $("Uyg'otgich").tap();
+    await $.pumpAndSettle();
 
-      // Open add alarm page via AppBar icon
-      await $(Icons.add_rounded).tap();
-      await $.pumpAndSettle();
+    // Open add alarm page via AppBar icon
+    await $(Icons.add_rounded).tap();
+    await $.pumpAndSettle();
 
-      // AddEditAlarmPage opened
-      expect($('Yangi Uyg\'otgich'), findsWidgets);
+    // AddEditAlarmPage opened
+    expect($('Yangi Uyg\'otgich'), findsWidgets);
 
-      // Save with defaults (label = 'Ertalabki uyg\'onish')
-      await $('Saqlash').tap();
-      await $.pumpAndSettle();
+    // Save with defaults (label = 'Ertalabki uyg\'onish')
+    await $('Saqlash').tap();
+    await $.pumpAndSettle();
 
-      // Alarm appears in list
-      expect($("Ertalabki uyg'onish"), findsWidgets);
+    // Alarm appears in list
+    expect($("Ertalabki uyg'onish"), findsWidgets);
 
-      // Toggle the alarm switch
-      await $(Switch).tap();
-      await $.pumpAndSettle();
-    },
-  );
+    // Toggle the alarm switch
+    await $(CupertinoSwitch).tap();
+    await $.pumpAndSettle();
+  });
 }

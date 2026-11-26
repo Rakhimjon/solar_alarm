@@ -14,6 +14,7 @@ import 'package:test_api/src/backend/invoker.dart';
 
 // START: GENERATED TEST IMPORTS
 import 'app_e2e_test.dart' as app_e2e_test;
+
 // END: GENERATED TEST IMPORTS
 
 Future<void> main() async {
@@ -104,9 +105,9 @@ Future<void> main() async {
     reportGroupStructure(dartTestGroup);
   });
 
-// START: GENERATED TEST GROUPS
+  // START: GENERATED TEST GROUPS
   group('app_e2e_test', app_e2e_test.main);
-// END: GENERATED TEST GROUPS
+  // END: GENERATED TEST GROUPS
 
   if (constants.testDiscoveryEnabled) {
     // Returning finishes declaration; `flutter test` then runs the explorer

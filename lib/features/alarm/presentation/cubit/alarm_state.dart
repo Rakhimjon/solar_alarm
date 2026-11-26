@@ -16,7 +16,8 @@ class AlarmState {
     this.ringingAlarmLabel,
     this.ringingRequireMath = false,
     this.remainingSunTaps = 5,
-    this.morningAffirmation = 'Xayrli tong! Bugun yangi imkoniyatlar va baraka kuni.',
+    this.morningAffirmation =
+        'Xayrli tong! Bugun yangi imkoniyatlar va baraka kuni.',
     this.isLoading = false,
     this.message,
   });
@@ -36,10 +37,18 @@ class AlarmState {
   }) {
     return AlarmState(
       alarms: alarms ?? this.alarms,
-      ringingAlarmId: clearRinging ? null : (ringingAlarmId ?? this.ringingAlarmId),
-      ringingAlarmLabel: clearRinging ? null : (ringingAlarmLabel ?? this.ringingAlarmLabel),
-      ringingRequireMath: clearRinging ? false : (ringingRequireMath ?? this.ringingRequireMath),
-      remainingSunTaps: clearRinging ? 5 : (remainingSunTaps ?? this.remainingSunTaps),
+      ringingAlarmId: clearRinging
+          ? null
+          : (ringingAlarmId ?? this.ringingAlarmId),
+      ringingAlarmLabel: clearRinging
+          ? null
+          : (ringingAlarmLabel ?? this.ringingAlarmLabel),
+      ringingRequireMath: clearRinging
+          ? false
+          : (ringingRequireMath ?? this.ringingRequireMath),
+      remainingSunTaps: clearRinging
+          ? 5
+          : (remainingSunTaps ?? this.remainingSunTaps),
       morningAffirmation: clearRinging
           ? 'Xayrli tong! Bugun yangi imkoniyatlar va baraka kuni.'
           : (morningAffirmation ?? this.morningAffirmation),

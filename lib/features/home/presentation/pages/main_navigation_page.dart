@@ -1,48 +1,36 @@
 import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_theme.dart';
-import 'package:solar_alarm/features/alarm/presentation/pages/alarm_view.dart';
-import 'package:solar_alarm/features/focus_timer/presentation/pages/focus_timer_view.dart';
-import 'package:solar_alarm/features/habit/presentation/pages/habit_view.dart';
-import 'package:solar_alarm/features/planner/presentation/pages/planner_view.dart';
-import 'package:solar_alarm/features/solar_clock/presentation/pages/solar_clock_view.dart';
 
-class MainNavigationPage extends StatefulWidget {
-  const MainNavigationPage({super.key});
+import 'package:go_router/go_router.dart';
 
-  @override
-  State<MainNavigationPage> createState() => _MainNavigationPageState();
-}
+class MainNavigationPage extends StatelessWidget {
+  final StatefulNavigationShell navigationShell;
 
-class _MainNavigationPageState extends State<MainNavigationPage> {
-  int _currentIndex = 0;
+  const MainNavigationPage({super.key, required this.navigationShell});
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
 
-    final pages = [
-      const SolarClockView(),
-      const FocusTimerView(),
-      PlannerView(onSwitchTab: (index) => setState(() => _currentIndex = index)),
-      AlarmView(onSwitchTab: (index) => setState(() => _currentIndex = index)),
-      const HabitView(),
-    ];
-
     return Scaffold(
       backgroundColor: colors.background,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: pages,
-      ),
+      body: navigationShell,
       bottomNavigationBar: ClipRect(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: CupertinoTabBar(
-            currentIndex: _currentIndex,
-            onTap: (index) => setState(() => _currentIndex = index),
-            backgroundColor: colors.background.withValues(alpha: context.isDark ? 0.78 : 0.88),
+            currentIndex: navigationShell.currentIndex,
+            onTap: (index) => navigationShell.goBranch(
+              index,
+              initialLocation: index == navigationShell.currentIndex,
+            ),
+            backgroundColor: colors.background.withValues(
+              alpha: context.isDark ? 0.78 : 0.88,
+            ),
             activeColor: colors.primary,
             inactiveColor: colors.textMuted,
             border: Border(

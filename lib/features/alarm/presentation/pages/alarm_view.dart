@@ -1,19 +1,19 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../core/router/path.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/theme_cubit.dart';
+import '../../../../core/widgets/custom_button.dart';
 import '../../domain/entities/alarm_item.dart';
 import '../cubit/alarm_cubit.dart';
 import '../cubit/alarm_state.dart';
-import 'add_edit_alarm_page.dart';
-import 'ringing_page.dart';
 
 class AlarmView extends StatelessWidget {
-  final Function(int)? onSwitchTab;
-
-  const AlarmView({super.key, this.onSwitchTab});
+  const AlarmView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,15 +25,7 @@ class AlarmView extends StatelessWidget {
           (curr.isRinging && !prev.isRinging),
       listener: (context, state) {
         if (state.isRinging) {
-          Navigator.of(context, rootNavigator: true).push(
-            PageRouteBuilder(
-              opaque: true,
-              pageBuilder: (_, _, _) => RingingPage(onSwitchTab: onSwitchTab),
-              transitionsBuilder: (_, anim, _, child) =>
-                  FadeTransition(opacity: anim, child: child),
-              transitionDuration: const Duration(milliseconds: 400),
-            ),
-          );
+          context.push(RoutePath.ringing);
         } else if (state.message != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -51,7 +43,7 @@ class AlarmView extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text('Uyg\'otgich', style: TextStyle(fontSize: 18.sp)),
+            title: const Text('Uyg\'otgich'),
             actions: [
               IconButton(
                 icon: Icon(
@@ -75,85 +67,59 @@ class AlarmView extends StatelessWidget {
               ),
             ],
           ),
-          body: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            child: state.alarms.isEmpty
-                ? Center(
+          body: state.alarms.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.r),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.access_alarms_rounded,
-                          size: 54.r,
-                          color: colors.textMuted,
-                        ),
+                        Text('⏰', style: TextStyle(fontSize: 44.sp)),
                         SizedBox(height: 12.h),
                         Text(
-                          'Hozircha uyg\'otgichlar o\'rnatilmagan',
+                          'Uyg\'otgich yo\'q',
                           style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
                             color: colors.textPrimary,
                           ),
                         ),
-                        SizedBox(height: 4.h),
+                        SizedBox(height: 6.h),
                         Text(
-                          'Quyosh/Namoz vaqtiga bog\'langan yoki yangi uyg\'otgich qo\'shing',
+                          'Aniq vaqt yoki quyosh/namoz vaqtiga bog\'lang',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: colors.textMuted,
-                            fontSize: 13.sp,
+                            fontSize: 12.sp,
                           ),
                         ),
-                        SizedBox(height: 16.h),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colors.primary,
-                            foregroundColor: colors.onPrimary,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 20.w,
-                              vertical: 12.h,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                          ),
-                          onPressed: () => _openAddEdit(context),
-                          icon: Icon(Icons.add_alarm_rounded, size: 20.r),
-                          label: Text(
-                            'Uyg\'otgich Qo\'shish',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                        SizedBox(height: 20.h),
+                        CustomButton(
+                          title: 'Uyg\'otgich Qo\'shish',
+                          icon: const Icon(Icons.add_rounded),
+                          borderRadius: 28.r,
+                          onTap: () => _openAddEdit(context),
                         ),
                       ],
                     ),
-                  )
-                : ListView.separated(
-                    itemCount: state.alarms.length,
-                    separatorBuilder: (_, _) => SizedBox(height: 10.h),
-                    itemBuilder: (context, index) {
-                      final alarm = state.alarms[index];
-                      return _buildAlarmCard(context, alarm, cubit);
-                    },
                   ),
-          ),
+                )
+              : ListView.separated(
+                  padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 96.h),
+                  itemCount: state.alarms.length,
+                  separatorBuilder: (_, _) => SizedBox(height: 8.h),
+                  itemBuilder: (context, index) =>
+                      _buildAlarmCard(context, state.alarms[index], cubit),
+                ),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerFloat,
           floatingActionButton: state.alarms.isEmpty
               ? null
-              : FloatingActionButton.extended(
-                  backgroundColor: colors.primary,
-                  foregroundColor: colors.onPrimary,
-                  onPressed: () => _openAddEdit(context),
-                  icon: Icon(Icons.alarm_add_rounded, size: 20.r),
-                  label: Text(
-                    'Yangi Uyg\'otgich',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.sp,
-                    ),
-                  ),
+              : CustomButton(
+                  title: 'Yangi Uyg\'otgich',
+                  icon: const Icon(Icons.alarm_add_rounded),
+                  borderRadius: 28.r,
+                  onTap: () => _openAddEdit(context),
                 ),
         );
       },
@@ -161,10 +127,7 @@ class AlarmView extends StatelessWidget {
   }
 
   void _openAddEdit(BuildContext context, [AlarmItem? alarm]) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => AddEditAlarmPage(initialAlarm: alarm)),
-    );
+    context.push(RoutePath.addEditAlarm, extra: alarm);
   }
 
   Widget _buildAlarmCard(
@@ -173,115 +136,69 @@ class AlarmView extends StatelessWidget {
     AlarmCubit cubit,
   ) {
     final colors = context.appColors;
+    final on = alarm.isEnabled;
+    final details = [
+      if (alarm.hasSolarLink)
+        '${_solarNameUz(alarm.linkedSolarType)} '
+            '${alarm.solarOffsetMinutes >= 0 ? "+" : ""}${alarm.solarOffsetMinutes} daq',
+      alarm.repeatDaysText,
+      if (alarm.requireMathMission) '☀️',
+    ].join(' · ');
 
-    return InkWell(
-      onTap: () => _openAddEdit(context, alarm),
+    return Material(
+      color: colors.card,
       borderRadius: BorderRadius.circular(16.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-        decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: alarm.isEnabled
-                ? colors.primary.withValues(alpha: 0.4)
-                : colors.cardBorder,
-          ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        alarm.formattedTime,
-                        style: TextStyle(
-                          fontSize: 28.sp,
-                          fontWeight: FontWeight.bold,
-                          color: alarm.isEnabled
-                              ? colors.textPrimary
-                              : colors.textMuted,
-                        ),
+      child: InkWell(
+        onTap: () => _openAddEdit(context, alarm),
+        borderRadius: BorderRadius.circular(16.r),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(18.w, 12.h, 10.w, 12.h),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      alarm.formattedTime,
+                      style: TextStyle(
+                        fontSize: 34.sp,
+                        fontWeight: FontWeight.w300,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                        color: on ? colors.textPrimary : colors.textMuted,
                       ),
-                      SizedBox(width: 8.w),
-                      Flexible(
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 3.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colors.primary.withValues(
-                              alpha: context.isDark ? 0.15 : 0.08,
-                            ),
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Text(
-                            alarm.label,
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: colors.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      alarm.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w500,
+                        color: on ? colors.textPrimary : colors.textMuted,
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 6.h),
-                  Wrap(
-                    spacing: 8.w,
-                    runSpacing: 4.h,
-                    children: [
-                      if (alarm.hasSolarLink)
-                        _miniBadge(
-                          '📍 ${_solarNameUz(alarm.linkedSolarType)} '
-                          '(${alarm.solarOffsetMinutes >= 0 ? "+" : ""}${alarm.solarOffsetMinutes} daq)',
-                          colors.primary,
-                          colors,
-                        ),
-                      if (alarm.requireMathMission)
-                        _miniBadge('☀️ Quyosh nurlari', Colors.amber, colors),
-                      _miniBadge(alarm.soundTitle, colors.textMuted, colors),
-                      _miniBadge(
-                        alarm.repeatDaysText,
-                        colors.textMuted,
-                        colors,
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      details,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: colors.textMuted,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Switch.adaptive(
-              value: alarm.isEnabled,
-              activeTrackColor: colors.primary.withValues(alpha: 0.5),
-              activeThumbColor: colors.primary,
-              onChanged: (_) => cubit.toggleAlarm(alarm.id),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _miniBadge(String text, Color textColor, AppColors colors) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-      decoration: BoxDecoration(
-        color: colors.cardBorder.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(6.r),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 10.sp,
-          color: textColor,
-          fontWeight: FontWeight.w500,
+              CupertinoSwitch(
+                value: on,
+                activeTrackColor: colors.primary,
+                onChanged: (_) => cubit.toggleAlarm(alarm.id),
+              ),
+            ],
+          ),
         ),
       ),
     );

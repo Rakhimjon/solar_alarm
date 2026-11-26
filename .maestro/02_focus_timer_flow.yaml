@@ -1,4 +1,4 @@
-appId: com.example.solar_alarm
+appId: com.example.solarAlarm
 ---
 # Flow 2: Test Focus Timer & Hourglass
 - launchApp:

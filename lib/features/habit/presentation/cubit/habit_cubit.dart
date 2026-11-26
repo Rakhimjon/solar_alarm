@@ -47,8 +47,8 @@ class HabitCubit extends Cubit<HabitState> {
     await loadHabits();
   }
 
-  Future<void> toggleToday(String id) async {
-    await repository.toggleCompletion(id, DateTime.now());
+  Future<void> toggleDate(String id, DateTime date) async {
+    await repository.toggleCompletion(id, date);
     await loadHabits();
   }
 }

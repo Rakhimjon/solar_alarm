@@ -1,11 +1,4 @@
-enum SolarEventType {
-  fajr,
-  sunrise,
-  dhuhr,
-  asr,
-  maghrib,
-  isha,
-}
+enum SolarEventType { fajr, sunrise, dhuhr, asr, maghrib, isha }
 
 extension SolarEventTypeX on SolarEventType {
   String get titleUz {

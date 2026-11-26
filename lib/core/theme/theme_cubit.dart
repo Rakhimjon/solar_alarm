@@ -7,8 +7,8 @@ class ThemeCubit extends Cubit<ThemeMode> {
   final SharedPreferences _prefs;
 
   ThemeCubit({required SharedPreferences prefs})
-      : _prefs = prefs,
-        super(_loadInitialTheme(prefs));
+    : _prefs = prefs,
+      super(_loadInitialTheme(prefs));
 
   static ThemeMode _loadInitialTheme(SharedPreferences prefs) {
     final saved = prefs.getString(_prefKey);

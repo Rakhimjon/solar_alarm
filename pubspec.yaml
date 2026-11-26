@@ -24,6 +24,7 @@ dependencies:
   flutter_screenutil: ^5.9.3
   wakelock_plus: ^1.2.8
   permission_handler: ^12.0.3
+  go_router: ^17.3.0
 
 dev_dependencies:
   flutter_test:

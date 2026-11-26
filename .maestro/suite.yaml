@@ -1,4 +1,4 @@
-appId: com.example.solar_alarm
+appId: com.example.solarAlarm
 ---
 - runFlow: 01_solar_clock_flow.yaml
 - runFlow: 02_focus_timer_flow.yaml
