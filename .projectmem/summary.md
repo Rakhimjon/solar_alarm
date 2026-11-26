@@ -32,7 +32,6 @@ A new Flutter project.
 - Navigation via go_router (RoutePath in lib/core/router/path.dart, GoRouter in router.dart, StatefulShellRoute tabs, context.go for tab switches); shared CustomButton in lib/core/widgets. Habit tab redesigned HabitKit-style: each habit card shows a GitHub-style contribution grid (HabitGrid CustomPainter, weeks x Mon-Sun, fills by habit color) plus a rounded-square check for today; week strip removed. Detail page: stat tiles, month calendar (tap past days to toggle), 53-week year grid. [lib/features/habit/presentation/widgets/habit_grid.dart]
 
 ## Notes
-- feat: implement alarm feature with storage, repository, cubit, and UI views
 - feat: add Maestro E2E test suite and math challenge mission to alarms
 - feat: add task categories and filtering to planner view
 - New feature: feat: migrate focus timer and navigation to iOS Cupertino design and add wakelock support [lib/core/theme/app_theme.dart]
@@ -42,6 +41,7 @@ A new Flutter project.
 - gotcha: Maestro iOS E2E loses Flutter semantics tree after inputText focuses a TextField (only status bar exposed); type+save legs can't be asserted. Workaround: keep flow to tap/assert navigation only. [.maestro/03_planner_flow.yaml]
 - pre-existing iOS build breakage unrelated to this task: lib/features/alarm/presentation/pages/ringing_page.dart uses undefined CustomButton (lines 339,358,375); blocks full flutter build ios / Maestro until fixed separately [lib/features/alarm/presentation/pages/ringing_page.dart]
 - New feature: feat: add habit feature, go_router navigation, and UI minimal polish [lib/di.dart]
+- New feature: feat: redesign habit tab with github-style contribution grid and updated detail view [lib/features/habit/presentation/pages/habit_detail_page.dart]
 
 ## Key files
 - `.gitignore`
