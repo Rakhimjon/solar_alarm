@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -33,9 +32,7 @@ class MemoryHabitRepository implements HabitRepository {
 }
 
 void main() {
-  testWidgets('Check circle toggles the day selected in the week strip', (
-    tester,
-  ) async {
+  testWidgets('Check button toggles today', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -45,7 +42,6 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
     final repo = MemoryHabitRepository([
       Habit(
         id: '1',
@@ -75,17 +71,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(repo.toggled.last, today);
 
-    // Monday has no visible "yesterday" in this week: go back one week.
-    if (today.weekday == 1) {
-      await tester.tap(find.byIcon(CupertinoIcons.chevron_left));
-      await tester.pumpAndSettle();
-    }
-    await tester.tap(find.bySemanticsLabel('${yesterday.day}-kun').first);
-    await tester.pumpAndSettle();
-    expect(find.text('Kecha'), findsOneWidget);
+    // Second tap un-marks the same day (no week strip any more).
     await tester.tap(toggle);
     await tester.pumpAndSettle();
-    expect(repo.toggled.last, yesterday);
+    expect(repo.toggled, [today, today]);
     semantics.dispose();
   });
 }

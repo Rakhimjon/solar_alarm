@@ -8,6 +8,7 @@ import 'package:solar_alarm/core/theme/app_theme.dart';
 import 'package:solar_alarm/features/habit/domain/entities/habit.dart';
 import 'package:solar_alarm/features/habit/presentation/cubit/habit_cubit.dart';
 import 'package:solar_alarm/features/habit/presentation/cubit/habit_state.dart';
+import 'package:solar_alarm/features/habit/presentation/widgets/habit_grid.dart';
 
 class HabitDetailPage extends StatelessWidget {
   final Habit habit;
@@ -22,7 +23,7 @@ class HabitDetailPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(habit.name),
+        title: const Text(''),
         actions: [
           IconButton(
             icon: Icon(Icons.edit_rounded, color: colors.primary),
@@ -54,124 +55,130 @@ class HabitDetailPage extends StatelessWidget {
           final current =
               state.habits.where((h) => h.id == habit.id).firstOrNull ?? habit;
 
-          return SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(20.r),
-                  decoration: BoxDecoration(
-                    color: colors.card,
-                    borderRadius: BorderRadius.circular(20.r),
+          return ListView(
+            padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 32.h),
+            children: [
+              // Header: emoji, name, schedule.
+              Row(
+                children: [
+                  Container(
+                    width: 52.r,
+                    height: 52.r,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: habitColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(16.r),
+                    ),
+                    child: Text(
+                      current.emoji,
+                      style: TextStyle(fontSize: 26.sp),
+                    ),
                   ),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 72.r,
-                        height: 72.r,
-                        decoration: BoxDecoration(
-                          color: habitColor.withValues(alpha: 0.18),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            current.emoji,
-                            style: TextStyle(fontSize: 36.sp),
+                  SizedBox(width: 14.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          current.name,
+                          style: TextStyle(
+                            fontSize: 20.sp,
+                            fontWeight: FontWeight.w700,
+                            color: colors.textPrimary,
                           ),
                         ),
-                      ),
-                      SizedBox(height: 12.h),
-                      Text(
-                        current.name,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
+                        Text(
+                          current.scheduleText,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: colors.textMuted,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        current.scheduleText,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: colors.textMuted,
-                        ),
-                      ),
-                      SizedBox(height: 16.h),
-                      Row(
-                        children: [
-                          _stat(
-                            '${current.currentStreak()}',
-                            'Joriy streak',
-                            habitColor,
-                            colors,
-                          ),
-                          _stat(
-                            '${current.bestStreak()}',
-                            'Eng yaxshi',
-                            habitColor,
-                            colors,
-                          ),
-                          _stat(
-                            '${current.totalCompletions}',
-                            'Jami',
-                            habitColor,
-                            colors,
-                          ),
-                          _stat(
-                            _completionRateText(current, today),
-                            '30 kun',
-                            habitColor,
-                            colors,
-                          ),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                ],
+              ),
+              SizedBox(height: 16.h),
+              // Stats tiles.
+              Row(
+                children: [
+                  _stat('${current.currentStreak()}', 'Streak 🔥', colors),
+                  SizedBox(width: 8.w),
+                  _stat('${current.bestStreak()}', 'Eng uzun', colors),
+                  SizedBox(width: 8.w),
+                  _stat('${current.totalCompletions}', 'Jami', colors),
+                  SizedBox(width: 8.w),
+                  _stat(_completionRateText(current, today), '30 kun', colors),
+                ],
+              ),
+              SizedBox(height: 20.h),
+              _sectionTitle('Kalendar', colors),
+              _MonthCalendar(
+                habit: current,
+                habitColor: habitColor,
+                today: today,
+              ),
+              SizedBox(height: 20.h),
+              _sectionTitle('So\'nggi yil', colors),
+              Container(
+                padding: EdgeInsets.all(14.r),
+                decoration: BoxDecoration(
+                  color: colors.card,
+                  borderRadius: BorderRadius.circular(16.r),
                 ),
-                SizedBox(height: 20.h),
-                Text(
-                  'Kalendar',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  reverse: true, // newest week visible first
+                  child: ExcludeSemantics(
+                    child: HabitGrid(habit: current, weeks: 53),
                   ),
                 ),
-                SizedBox(height: 10.h),
-                _MonthCalendar(
-                  habit: current,
-                  habitColor: habitColor,
-                  today: today,
-                ),
-              ],
-            ),
+              ),
+            ],
           );
         },
       ),
     );
   }
 
-  Widget _stat(String value, String label, Color accent, AppColors colors) {
+  Widget _sectionTitle(String title, AppColors colors) => Padding(
+    padding: EdgeInsets.fromLTRB(4.w, 0, 4.w, 8.h),
+    child: Text(
+      title,
+      style: TextStyle(
+        fontSize: 15.sp,
+        fontWeight: FontWeight.w600,
+        color: colors.textPrimary,
+      ),
+    ),
+  );
+
+  Widget _stat(String value, String label, AppColors colors) {
     return Expanded(
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.bold,
-              color: accent,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: BorderRadius.circular(14.r),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w700,
+                color: colors.textPrimary,
+              ),
             ),
-          ),
-          SizedBox(height: 2.h),
-          Text(
-            label,
-            style: TextStyle(fontSize: 11.sp, color: colors.textMuted),
-          ),
-        ],
+            SizedBox(height: 2.h),
+            Text(
+              label,
+              style: TextStyle(fontSize: 11.sp, color: colors.textMuted),
+            ),
+          ],
+        ),
       ),
     );
   }
