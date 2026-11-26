@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:solar_alarm/features/alarm/presentation/pages/alarm_view.dart';
 import 'package:solar_alarm/features/focus_timer/presentation/pages/focus_timer_view.dart';
+import 'package:solar_alarm/features/habit/presentation/pages/habit_view.dart';
 import 'package:solar_alarm/features/planner/presentation/pages/planner_view.dart';
 import 'package:solar_alarm/features/solar_clock/presentation/pages/solar_clock_view.dart';
 
@@ -26,6 +27,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       const FocusTimerView(),
       PlannerView(onSwitchTab: (index) => setState(() => _currentIndex = index)),
       AlarmView(onSwitchTab: (index) => setState(() => _currentIndex = index)),
+      const HabitView(),
     ];
 
     return Scaffold(
@@ -69,6 +71,11 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
                 icon: Icon(CupertinoIcons.alarm),
                 activeIcon: Icon(CupertinoIcons.alarm_fill),
                 label: 'Uyg\'otgich',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.repeat),
+                activeIcon: Icon(CupertinoIcons.repeat),
+                label: 'Odatlar',
               ),
             ],
           ),

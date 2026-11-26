@@ -6,6 +6,7 @@ import 'core/theme/theme_cubit.dart';
 import 'di.dart';
 import 'features/alarm/presentation/cubit/alarm_cubit.dart';
 import 'features/focus_timer/presentation/cubit/focus_timer_cubit.dart';
+import 'features/habit/presentation/cubit/habit_cubit.dart';
 import 'features/home/presentation/pages/main_navigation_page.dart';
 import 'features/planner/presentation/cubit/planner_cubit.dart';
 import 'features/solar_clock/presentation/cubit/solar_clock_cubit.dart';
@@ -31,6 +32,9 @@ class SolarFocusApp extends StatelessWidget {
         ),
         BlocProvider<PlannerCubit>(
           create: (_) => sl<PlannerCubit>(),
+        ),
+        BlocProvider<HabitCubit>(
+          create: (_) => sl<HabitCubit>(),
         ),
         BlocProvider<FocusTimerCubit>(
           create: (_) => sl<FocusTimerCubit>(),

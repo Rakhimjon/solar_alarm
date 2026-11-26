@@ -8,6 +8,10 @@ import 'features/alarm/data/repositories/alarm_repository_impl.dart';
 import 'features/alarm/domain/repositories/alarm_repository.dart';
 import 'features/alarm/presentation/cubit/alarm_cubit.dart';
 import 'features/focus_timer/presentation/cubit/focus_timer_cubit.dart';
+import 'features/habit/data/datasources/habit_local_datasource.dart';
+import 'features/habit/data/repositories/habit_repository_impl.dart';
+import 'features/habit/domain/repositories/habit_repository.dart';
+import 'features/habit/presentation/cubit/habit_cubit.dart';
 import 'features/planner/data/datasources/planner_local_datasource.dart';
 import 'features/planner/data/repositories/plan_repository_impl.dart';
 import 'features/planner/domain/repositories/plan_repository.dart';
@@ -42,6 +46,9 @@ Future<void> initDi() async {
   sl.registerLazySingleton<PlannerLocalDataSource>(
     () => PlannerLocalDataSource(prefs: sl<SharedPreferences>()),
   );
+  sl.registerLazySingleton<HabitLocalDataSource>(
+    () => HabitLocalDataSource(prefs: sl<SharedPreferences>()),
+  );
   sl.registerLazySingleton<AlarmLocalStorage>(
     () => AlarmLocalStorageImpl(
       prefs: sl<SharedPreferences>(),
@@ -60,6 +67,9 @@ Future<void> initDi() async {
   sl.registerLazySingleton<PlanRepository>(
     () => PlanRepositoryImpl(localDataSource: sl<PlannerLocalDataSource>()),
   );
+  sl.registerLazySingleton<HabitRepository>(
+    () => HabitRepositoryImpl(localDataSource: sl<HabitLocalDataSource>()),
+  );
   sl.registerLazySingleton<AlarmRepository>(
     () => AlarmRepositoryImpl(localStorage: sl<AlarmLocalStorage>()),
   );
@@ -73,6 +83,9 @@ Future<void> initDi() async {
   );
   sl.registerLazySingleton<PlannerCubit>(
     () => PlannerCubit(repository: sl<PlanRepository>()),
+  );
+  sl.registerLazySingleton<HabitCubit>(
+    () => HabitCubit(repository: sl<HabitRepository>()),
   );
   sl.registerFactory<FocusTimerCubit>(
     () => FocusTimerCubit(
